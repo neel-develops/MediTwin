@@ -649,61 +649,53 @@
   PAGES.allocations = {
     mount(main, params) {
       this.applyParams(params);
-      main.innerHTML = `<div class="page explorer">
-        <section class="card ward-head">
-          <div class="wh-icon" aria-hidden="true">${icon('hospital')}</div>
-          <div class="wh-title"><h1 id="ex-title">—</h1><p id="ex-sub"></p></div>
-          <div class="wh-chips" id="ex-chips" role="group" aria-label="Filter by status"></div>
-        </section>
-        <div class="ex-body">
-          <aside class="card ward-list" aria-label="Wards">
-            <label class="search-field sm"><span class="sr-only">Filter wards</span>${icon('search')}<input id="ex-ward-search" type="search" placeholder="Search ward…" value="${esc(S.wardSearch)}"></label>
-            <ul id="ex-wards"></ul>
-          </aside>
-          <section class="stage-card">
-            <div class="stage-wrap">
-              <div class="stage" id="stage" tabindex="0" role="application" aria-label="3D bed grid. Drag to rotate, right-drag or shift-drag to pan, scroll to zoom. Arrow keys rotate, plus and minus zoom. Use the List view for a non-3D alternative."></div>
-              <div class="stage-tools">
-                <label class="sel ward-select"><span class="sr-only">Ward</span><select id="ex-ward-select"></select></label>
-                <label class="sel"><span class="sr-only">Status</span><select id="ex-status"><option value="">All statuses</option>${options(MT.BED_STATUSES, S.exFilters.status, STATUS_LABEL)}</select></label>
-                <label class="sel"><span class="sr-only">Bed type</span><select id="ex-type"><option value="">All bed types</option>${options(MT.BED_TYPES, S.exFilters.bed_type)}</select></label>
-                <div class="seg-toggle" role="group" aria-label="View">
-                  <button data-act="view" data-view="3d" aria-pressed="${S.view === '3d'}">${icon('cube')}3D</button>
-                  <button data-act="view" data-view="list" aria-pressed="${S.view === 'list'}">${icon('list')}List</button>
-                </div>
-                <a class="btn sm tools-link" href="#/beds" title="Table of every bed across all wards">${icon('layers')}All wards table</a>
-              </div>
-              <div class="place-banner" id="ex-place" hidden></div>
-              <div class="stage-msg" id="stage-msg" hidden></div>
-              <div class="stage-controls" role="toolbar" aria-label="Camera">
-                <button class="icon-btn" data-act="cam" data-cam="in" aria-label="Zoom in">${icon('plus')}</button>
-                <button class="icon-btn" data-act="cam" data-cam="out" aria-label="Zoom out">${icon('minus')}</button>
-                <button class="icon-btn" data-act="cam" data-cam="right" aria-label="Rotate">${icon('rotr')}</button>
-                <button class="icon-btn" data-act="cam" data-cam="reset" aria-label="Reset view">${icon('target')}</button>
-                <button class="icon-btn" data-act="cam" data-cam="auto" aria-label="Auto-rotate" aria-pressed="false">${icon('orbit')}</button>
-              </div>
-              <div class="stage-note">Display grid only — not physical bed locations</div>
-              <div class="bed-list" id="ex-list" hidden></div>
+      // Ward tabs and bed search live in the top bar while this page is open.
+      $('#topbar-slot').innerHTML = `<div class="ward-tabs" id="ex-wards" role="tablist" aria-label="Ward"></div>
+        <label class="search-field sm bed-find"><span class="sr-only">Find bed by ID</span>${icon('search')}<input id="ex-search" type="search" placeholder="Find bed — e.g. W1-042" value="${esc(S.exFilters.search)}"></label>`;
+      document.body.classList.add('route-allocations');
+      main.innerHTML = `<div class="page explorer cx">
+        <section class="stage-card cx-stage">
+          <div class="stage-wrap">
+            <div class="stage" id="stage" tabindex="0" role="application" aria-label="3D bed grid. Drag to rotate, right-drag or shift-drag to pan, scroll to zoom. Arrow keys rotate, plus and minus zoom. Use the List view for a non-3D alternative."></div>
+            <div class="cx-head">
+              <div class="cx-title"><h1 id="ex-title">—</h1><p id="ex-sub"></p>
+                <div class="cx-filters">
+                  <label class="sel"><span class="sr-only">Status</span><select id="ex-status"><option value="">All statuses</option>${options(MT.BED_STATUSES, S.exFilters.status, STATUS_LABEL)}</select></label>
+                  <label class="sel"><span class="sr-only">Bed type</span><select id="ex-type"><option value="">All bed types</option>${options(MT.BED_TYPES, S.exFilters.bed_type)}</select></label>
+                  <a class="btn sm tools-link" href="#/beds" title="Table of every bed across all wards">${icon('layers')}All wards</a>
+                </div></div>
+              <div class="cx-chips" id="ex-chips" role="group" aria-label="Filter by status"></div>
             </div>
-          </section>
-          <aside class="card detail-panel" aria-live="polite">
-            <div id="ex-section"></div>
-            <label class="search-field sm panel-search"><span class="sr-only">Find bed by ID</span>${icon('search')}<input id="ex-search" type="search" placeholder="Search bed… (Enter to select)" value="${esc(S.exFilters.search)}"></label>
-            <div id="ex-bed"></div>
-          </aside>
-        </div>
-        <div class="ex-bottom">
-          <section class="card" id="ex-overview"></section>
-          <section class="card" id="ex-activity"></section>
-          <section class="card" id="ex-quick"></section>
-          <section class="card" id="ex-alerts"></section>
-        </div></div>`;
+            <div class="place-banner" id="ex-place" hidden></div>
+            <div class="stage-msg" id="stage-msg" hidden></div>
+            <div class="cx-tools">
+              <div class="tool-group cx-cam" role="toolbar" aria-label="Camera">
+                <button data-act="cam" data-cam="in" aria-label="Zoom in">${icon('plus')}</button>
+                <button data-act="cam" data-cam="out" aria-label="Zoom out">${icon('minus')}</button>
+                <button data-act="cam" data-cam="right" aria-label="Rotate">${icon('rotr')}</button>
+                <button data-act="cam" data-cam="reset" aria-label="Reset view">${icon('target')}</button>
+                <button data-act="cam" data-cam="auto" aria-label="Auto-rotate" aria-pressed="false">${icon('orbit')}</button>
+              </div>
+              <div class="tool-group" role="group" aria-label="View">
+                <button data-act="view" data-view="3d" aria-pressed="${S.view === '3d'}" aria-label="3D view">${icon('cube')}</button>
+                <button data-act="view" data-view="list" aria-pressed="${S.view === 'list'}" aria-label="List view">${icon('list')}</button>
+              </div>
+            </div>
+            <div class="stage-note">Display grid only — not physical bed locations</div>
+            <div class="bed-list" id="ex-list" hidden></div>
+          </div>
+        </section>
+        <aside class="card cx-insp" id="ex-insp" aria-live="polite"></aside>
+        <section class="cx-dock" aria-label="Ward summary">
+          <div class="card cx-occ" id="ex-occ"></div>
+          <button class="card cx-stat" id="ex-ready" data-act="chip-filter" data-status="AVAILABLE"></button>
+          <button class="card cx-stat" id="ex-waiting" data-act="go" data-route="patients" data-params='{"stage":"WAITING"}'></button>
+          <div class="card cx-feed" id="ex-activity"></div>
+        </section></div>`;
       $('#ex-search').addEventListener('input', (e) => { S.exFilters.search = e.target.value; this.update(); });
       $('#ex-search').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); this.findBed(e.target.value); } });
       $('#ex-status').addEventListener('change', (e) => { S.exFilters.status = e.target.value; this.update(); });
       $('#ex-type').addEventListener('change', (e) => { S.exFilters.bed_type = e.target.value; this.update(); });
-      $('#ex-ward-search').addEventListener('input', (e) => { S.wardSearch = e.target.value; this.update(); });
-      $('#ex-ward-select').addEventListener('change', (e) => this.selectWard(Number(e.target.value)));
       lastStageWard = null;
       if (!thumbs && window.MTScene) window.MTScene.thumbnails().then((t) => { thumbs = t; if (currentPage === this) this.renderPanel(); }).catch(() => {});
       this.ensureStage();
@@ -711,6 +703,8 @@
     unmount() {
       if (stage) stage.dispose();
       stage = null; stagePromise = null; lastStageWard = null;
+      $('#topbar-slot').innerHTML = '';
+      document.body.classList.remove('route-allocations');
     },
     applyParams(params) {
       if (params.ward && Number(params.ward) !== S.wardId) { S.wardId = Number(params.ward); S.bedId = null; S.group = 0; }
@@ -727,6 +721,13 @@
       stagePromise = window.MTScene.create(el, {
         onBedClick: (id) => this.selectBed(id, false),
         onGroupClick: (i) => this.selectGroup(i, true),
+        // Overlay UI drawn on the stage, so the 3D fit and section labels stay clear of it.
+        obstacles: () => {
+          const base = el.getBoundingClientRect();
+          return $$('.cx-title, .cx-chips, .cx-tools, .place-banner:not([hidden])').map((n) => n.getBoundingClientRect())
+            .filter((r) => r.width && r.height)
+            .map((r) => ({ l: r.left - base.left, r: r.right - base.left, t: r.top - base.top, b: r.bottom - base.top }));
+        },
       }).then((ctrl) => {
         if (!document.contains(el)) { ctrl.dispose(); return; }
         stage = ctrl;
@@ -802,8 +803,6 @@
       'chip-filter': (el) => { S.exFilters.status = S.exFilters.status === el.dataset.status ? '' : el.dataset.status; $('#ex-status').value = S.exFilters.status; PAGES.allocations.update(); },
       'pick-bed': (el) => PAGES.allocations.selectBed(Number(el.dataset.bed), true),
       'pick-group': (el) => PAGES.allocations.selectGroup(Number(el.dataset.group), true),
-      'close-section': () => { S.group = null; S.bedId = null; replaceHash('allocations', { for: S.placing, ward: S.wardId }); if (stage) { stage.setActiveGroup(null); stage.resetView(); } PAGES.allocations.update(); },
-      'close-bed': () => { S.bedId = null; replaceHash('allocations', { for: S.placing, ward: S.wardId }); PAGES.allocations.update(); },
       'panel-tab': (el) => { S.panelTab = el.dataset.tab; PAGES.allocations.renderPanel(); },
       'clear-filters': () => { S.exFilters = { status: '', bed_type: '', search: '' }; $('#ex-status').value = ''; $('#ex-type').value = ''; $('#ex-search').value = ''; PAGES.allocations.update(); },
       'place-cancel': () => { S.placing = null; replaceHash('allocations', { for: null, ward: S.wardId, bed: S.bedId }); PAGES.allocations.update(); },
@@ -822,7 +821,8 @@
       if (!wards.length) {
         $('#ex-title').textContent = 'No active wards';
         $('#ex-sub').innerHTML = 'Add a ward in <a href="#/setup">Setup</a> to generate beds.';
-        $('#ex-wards').innerHTML = ''; $('#ex-chips').innerHTML = ''; $('#ex-section').innerHTML = ''; $('#ex-bed').innerHTML = '';
+        $('#ex-wards').innerHTML = ''; $('#ex-chips').innerHTML = ''; $('#ex-insp').innerHTML = '<div class="empty">No active wards yet.</div>';
+        ['#ex-occ', '#ex-ready', '#ex-waiting', '#ex-activity'].forEach((s) => { $(s).innerHTML = ''; });
         if (stage) stage.setBeds([], {});
         return;
       }
@@ -831,7 +831,9 @@
       const settings = api.getSettings();
       const beds = api.listBeds({ ward_id: ward.id });
       if (S.bedId != null && !beds.some((b) => b.id === S.bedId)) S.bedId = null;
-      if (S.group != null && S.group * settings.group_size >= beds.length) S.group = beds.length ? 0 : null;
+      if (S.group == null || S.group * settings.group_size >= beds.length) S.group = 0;
+      // The inspector always shows a bed: default to the first bed of the current section.
+      if (S.bedId == null && beds.length) S.bedId = beds[Math.min(S.group * settings.group_size, beds.length - 1)].id;
       this.beds = beds; this.ward = ward; this.groupSize = settings.group_size;
 
       // Placement mode: highlight every bed that suits the patient being placed.
@@ -850,12 +852,9 @@
       $('#ex-title').textContent = ward.name;
       const groups = Math.ceil(beds.length / settings.group_size);
       $('#ex-sub').innerHTML = `${ward.bed_count} beds <span class="dot-sep">•</span> ${esc(ward.category)}` + (groups > 1 ? ` <span class="dot-sep">•</span> ${groups} sections` : '');
-      $('#ex-chips').innerHTML = MT.BED_STATUSES.map((s) => `<button class="status-chip st-${s} ${S.exFilters.status === s ? 'on' : ''}" data-act="chip-filter" data-status="${s}" aria-pressed="${S.exFilters.status === s}"><span><i aria-hidden="true"></i>${STATUS_LABEL[s]}</span><strong>${ward.counts[s]}</strong></button>`).join('');
+      $('#ex-chips').innerHTML = MT.BED_STATUSES.map((s) => `<button class="cx-chip st-${s} ${S.exFilters.status === s ? 'on' : ''}" data-act="chip-filter" data-status="${s}" aria-pressed="${S.exFilters.status === s}"><small><i aria-hidden="true"></i>${STATUS_LABEL[s]}</small><strong>${ward.counts[s]}</strong></button>`).join('');
 
-      const q = S.wardSearch.trim().toLowerCase();
-      $('#ex-wards').innerHTML = wards.filter((w) => !q || w.name.toLowerCase().includes(q)).map((w) => `<li><button class="ward-item ${w.id === ward.id ? 'active' : ''}" data-act="ward-pick" data-ward="${w.id}" ${w.id === ward.id ? 'aria-current="true"' : ''}>
-        <span class="wi-icon" aria-hidden="true">${icon('bed')}</span><span class="wi-text"><strong>${esc(w.name)}</strong><small>${w.bed_count} beds${placing ? ` · <b class="${placing.byWard[w.id] ? 'fit-ok' : 'fit-none'}">${placing.byWard[w.id] || 0} suitable</b>` : ''}</small></span>${icon('chev')}</button></li>`).join('') || '<li class="empty sm">No ward matches.</li>';
-      $('#ex-ward-select').innerHTML = wards.map((w) => `<option value="${w.id}" ${w.id === ward.id ? 'selected' : ''}>${esc(w.name)} (${w.bed_count})</option>`).join('');
+      $('#ex-wards').innerHTML = wards.map((w) => `<button class="ward-tab ${w.id === ward.id ? 'on' : ''}" role="tab" aria-selected="${w.id === ward.id}" data-act="ward-pick" data-ward="${w.id}">${esc(w.name)}<span>${placing ? `<b class="${placing.byWard[w.id] ? 'fit-ok' : 'fit-none'}">${placing.byWard[w.id] || 0} fit</b>` : w.bed_count}</span></button>`).join('');
 
       const f = S.exFilters;
       const filtering = f.status || f.bed_type || f.search.trim();
@@ -895,6 +894,7 @@
         $('#stage-msg').innerHTML = `${match.size} of ${beds.length} beds match. <button class="link" data-act="clear-filters">Clear filters</button>`;
       } else if (stage) $('#stage-msg').hidden = true;
       $('.stage-wrap').classList.toggle('placing', !!placing);
+      if (stage) stage.refit(); // the header may have changed height (banner, wrapping chips)
     },
     renderList() {
       const { beds, groupSize, match } = this;
@@ -909,100 +909,97 @@
       }
       $('#ex-list').innerHTML = html || '<div class="empty">No beds match the current filters.</div>';
     },
+    // Inspector: the selected bed, its tabs, its section strip and the actions it allows.
     renderPanel() {
       const { beds, groupSize, ward } = this;
       if (!ward) return;
-      const sec = $('#ex-section');
-      if (S.group != null && S.group * groupSize < beds.length) {
-        const members = beds.slice(S.group * groupSize, (S.group + 1) * groupSize);
-        const c = {}; MT.BED_STATUSES.forEach((s) => (c[s] = members.filter((b) => b.status === s).length));
-        sec.innerHTML = `<div class="panel-head"><div><h2>${esc(ward.name)} – ${esc(groupName(S.group))}</h2><p class="muted small">${members.length} beds</p></div><button class="icon-btn plain" data-act="close-section" aria-label="Close section">${icon('x')}</button></div>
-          <div class="mini-stats">${MT.BED_STATUSES.map((s) => `<div class="ms st-${s}"><strong>${c[s]}</strong><small>${STATUS_LABEL[s]}</small></div>`).join('')}</div>
-          <div class="mini-grid">${members.map((b) => `<button class="mini st-${b.status} ${b.id === S.bedId ? 'on' : ''} ${this.match && !this.match.has(b.id) ? 'dim' : ''}" data-act="pick-bed" data-bed="${b.id}" aria-label="${esc(b.bed_code)}, ${STATUS_LABEL[b.status]}">${bedThumb(b.status, 'mini-img')}<strong>${esc(shortCode(b.bed_code))}</strong><span class="pill st-${b.status}">${STATUS_LABEL[b.status]}</span></button>`).join('')}</div>`;
-      } else {
-        const groups = Math.ceil(beds.length / groupSize);
-        sec.innerHTML = `<div class="panel-head"><div><h2>${esc(ward.name)}</h2><p class="muted small">${beds.length} beds · ${groups} visual sections</p></div></div>
-          ${beds.length ? `<ul class="group-list">${Array.from({ length: groups }, (_, g) => {
-            const m = beds.slice(g * groupSize, (g + 1) * groupSize);
-            const c = {}; MT.BED_STATUSES.forEach((s) => (c[s] = m.filter((b) => b.status === s).length));
-            return `<li><button class="group-row" data-act="pick-group" data-group="${g}"><span><strong>${esc(groupName(g))}</strong><small>${esc(m[0].bed_code)}–${esc(shortCode(m[m.length - 1].bed_code))} · ${c.AVAILABLE} available</small></span>${stackBar(c, m.length)}</button></li>`;
-          }).join('')}</ul>` : '<div class="empty">No beds in this ward.</div>'}`;
-      }
-      $('#ex-bed').innerHTML = S.bedId != null ? this.bedCard() : `<div class="bed-empty">${icon('info')}<span>Select a bed in the 3D view or the section above to see details.</span></div>`;
-    },
-    bedCard() {
+      const insp = $('#ex-insp');
+      if (!beds.length) { insp.innerHTML = `<div class="empty">${esc(ward.name)} has no beds. Use Setup → Set bed count.</div>`; return; }
       const bed = attempt(() => api.getBed(S.bedId));
-      if (!bed) { S.bedId = null; return ''; }
-      const gi = Math.floor(bed.index_in_ward / this.groupSize);
+      if (!bed) { insp.innerHTML = ''; return; }
+      const gi = Math.floor(bed.index_in_ward / groupSize);
+      S.group = gi;
       const tabs = ['details', 'equipment', 'patient'];
       const tab = tabs.includes(S.panelTab) ? S.panelTab : 'details';
+      const p = bed.patient;
       let content = '';
       if (tab === 'details') {
         content = `<dl class="kv">
           <dt>Ward</dt><dd>${esc(bed.ward_name)}</dd>
           <dt>Section</dt><dd>${esc(groupName(gi))}</dd>
-          <dt>Bed type</dt><dd>${esc(bed.bed_type)} Bed</dd>
+          <dt>Bed type</dt><dd>${esc(bed.bed_type)}</dd>
           <dt>Features</dt><dd>${bed.features.length ? esc(bed.features.join(', ')) : '<span class="muted">None</span>'}</dd>
-          <dt>Patient</dt><dd>${bed.patient ? esc(bed.patient.patient_code) : '<span class="muted">No patient assigned</span>'}</dd>
-          <dt>Last updated</dt><dd>${esc(fmtTime(bed.updated_at))}</dd>
+          <dt>Patient</dt><dd>${p ? esc(p.patient_code) : '<span class="muted">No patient assigned</span>'}</dd>
+          <dt>Updated</dt><dd>${esc(ago(bed.updated_at))}</dd>
           ${bed.notes ? `<dt>Notes</dt><dd>${esc(bed.notes)}</dd>` : ''}</dl>`;
       } else if (tab === 'equipment') {
-        content = `<h3 class="sub">Bed features</h3>${bed.features.length ? `<ul class="tags">${bed.features.map((f) => `<li>${esc(f)}</li>`).join('')}</ul>` : '<p class="muted small">No fixed fittings recorded.</p>'}
-          <h3 class="sub">Devices assigned</h3>${bed.devices.length ? `<ul class="dev-list">${bed.devices.map((d) => `<li><button class="link" data-act="edit-equipment" data-item="${d.id}">${esc(d.equipment_code)}</button> ${esc(d.equipment_type)} ${chip(d.status)}</li>`).join('')}</ul>` : '<p class="muted small">No devices assigned. Devices are assigned when a patient who needs them is allocated.</p>'}`;
+        content = `<dl class="kv"><dt>Fixed fittings</dt><dd>${bed.features.length ? esc(bed.features.join(', ')) : 'None'}</dd>
+          <dt>Devices</dt><dd>${bed.devices.length ? bed.devices.map((d) => `<button class="link" data-act="edit-equipment" data-item="${d.id}">${esc(d.equipment_code)}</button>`).join(', ') : '<span class="muted">None assigned</span>'}</dd></dl>`;
       } else {
-        const p = bed.patient;
         content = p ? `<dl class="kv">
-            <dt>Patient</dt><dd><button class="link" data-act="go" data-route="patients" data-params='${JSON.stringify({ patient: p.id })}'>${esc(p.patient_code)}</button> · ${esc(p.display_name)} <span class="tag">demo</span></dd>
-            <dt>Care category</dt><dd>${esc(p.care_category)}</dd>
-            <dt>Needs</dt><dd>${esc(p.required_bed_type)} bed${p.required_equipment_types.length ? ' · ' + esc(p.required_equipment_types.join(', ')) : ''}${p.required_bed_features.length ? ' · ' + esc(p.required_bed_features.join(', ')) : ''}</dd>
-            <dt>Allocated</dt><dd>${esc(fmtTime(bed.allocation.assigned_at))}</dd>
-            <dt>Admitted</dt><dd>${bed.allocation.admitted_at ? esc(fmtTime(bed.allocation.admitted_at)) : '<span class="muted">Awaiting arrival</span>'}</dd></dl>
-          <div class="btn-row">${p.status === 'ALLOCATED'
-            ? `<button class="btn sm" data-act="admit" data-alloc="${bed.allocation.id}">${icon('login')}Mark admitted</button>
-               <button class="btn sm" data-act="cancel-alloc" data-alloc="${bed.allocation.id}" data-label="${esc(p.patient_code)} → ${esc(bed.bed_code)}">${icon('undo')}Cancel allocation</button>`
-            : `<button class="btn sm" data-act="release" data-alloc="${bed.allocation.id}" data-outcome="DISCHARGED" data-label="${esc(p.patient_code)} in ${esc(bed.bed_code)}">${icon('out')}Discharge</button>
-               <button class="btn sm" data-act="release" data-alloc="${bed.allocation.id}" data-outcome="TRANSFERRED" data-label="${esc(p.patient_code)} in ${esc(bed.bed_code)}">${icon('out')}Transfer out</button>`}</div>`
-          : `<p class="muted small" style="padding:8px 0">No patient assigned.${bed.status === 'AVAILABLE' ? '' : ` This bed is ${STATUS_LABEL[bed.status].toLowerCase()} and can't take a patient until it is marked available.`}</p>`;
+            <dt>Patient</dt><dd><button class="link" data-act="go" data-route="patients" data-params='${JSON.stringify({ patient: p.id })}'>${esc(p.patient_code)}</button> <span class="tag">demo</span></dd>
+            <dt>Name</dt><dd>${esc(p.display_name)}</dd>
+            <dt>Care</dt><dd>${esc(p.care_category)}</dd>
+            <dt>Needs</dt><dd>${esc([p.required_bed_type, ...p.required_equipment_types, ...p.required_bed_features].join(' · '))}</dd>
+            <dt>Allocated</dt><dd>${esc(ago(bed.allocation.assigned_at))}</dd>
+            <dt>Admitted</dt><dd>${bed.allocation.admitted_at ? esc(ago(bed.allocation.admitted_at)) : '<span class="muted">Awaiting arrival</span>'}</dd></dl>`
+          : `<dl class="kv"><dt>Patient</dt><dd><span class="muted">No patient assigned</span></dd></dl>${bed.status === 'AVAILABLE' ? '' : `<p class="muted small cx-note">This bed is ${STATUS_LABEL[bed.status].toLowerCase()} and can't take a patient until it is marked available.</p>`}`;
       }
-      const transitions = bed.allowed_transitions.map((s) => `<button class="btn sm" data-act="bed-status" data-bed="${bed.id}" data-status="${s}"><i class="sw st-${s}"></i>${esc(TRANSITION_LABEL[s])}</button>`).join('');
+
+      // Placement mode (coming from the Patients page) replaces the normal actions.
       const pl = this.placing;
-      let placeBox = '';
+      let primary = '', secondary = '';
       if (pl) {
-        if (pl.eligible.has(bed.id)) {
-          placeBox = `<button class="btn primary block" data-act="place-confirm" data-bed="${bed.id}">${icon('check')}Confirm allocation · ${esc(pl.p.patient_code)}</button>`;
-        } else {
+        if (pl.eligible.has(bed.id)) primary = `<button class="btn primary block" data-act="place-confirm" data-bed="${bed.id}">${icon('check')}Confirm allocation · ${esc(pl.p.patient_code)}</button>`;
+        else {
           const cand = api.bedCandidates(bed.id).find((c) => c.patient_id === pl.p.id);
-          placeBox = `<div class="place-no">${icon('alert')}<div><strong>Not suitable for ${esc(pl.p.patient_code)}</strong><ul>${(cand ? cand.unmet : ['Bed is not available']).map((u) => `<li>${esc(u)}</li>`).join('')}</ul><small>Pick a highlighted bed instead.</small></div></div>`;
+          primary = `<div class="place-no">${icon('alert')}<div><strong>Not suitable for ${esc(pl.p.patient_code)}</strong><ul>${(cand ? cand.unmet : ['Bed is not available']).map((u) => `<li>${esc(u)}</li>`).join('')}</ul><small>Pick a highlighted bed instead.</small></div></div>`;
+        }
+      } else if (bed.status === 'AVAILABLE') {
+        primary = `<button class="btn primary block" data-act="assign-to-bed" data-bed="${bed.id}">${icon('user')}Assign patient</button>`;
+      } else if (bed.status === 'OCCUPIED' && p) {
+        primary = `<button class="btn primary block" data-act="go" data-route="patients" data-params='${JSON.stringify({ patient: p.id })}'>${icon('user')}View patient ${esc(p.patient_code)}</button>`;
+      }
+      if (!pl) {
+        if (bed.status === 'OCCUPIED' && p) {
+          secondary = p.status === 'ALLOCATED'
+            ? `<button class="btn cx-ghost" data-act="admit" data-alloc="${bed.allocation.id}">${icon('login')}Mark admitted</button>
+               <button class="btn cx-ghost" data-act="cancel-alloc" data-alloc="${bed.allocation.id}" data-label="${esc(p.patient_code)} → ${esc(bed.bed_code)}">${icon('undo')}Cancel</button>`
+            : `<button class="btn cx-ghost" data-act="release" data-alloc="${bed.allocation.id}" data-outcome="DISCHARGED" data-label="${esc(p.patient_code)} in ${esc(bed.bed_code)}">Discharge</button>
+               <button class="btn cx-ghost" data-act="release" data-alloc="${bed.allocation.id}" data-outcome="TRANSFERRED" data-label="${esc(p.patient_code)} in ${esc(bed.bed_code)}">Transfer</button>`;
+        } else {
+          secondary = bed.allowed_transitions.map((s) => `<button class="btn cx-ghost" data-act="bed-status" data-bed="${bed.id}" data-status="${s}" title="${esc(TRANSITION_LABEL[s])}"><i class="sw st-${s}"></i>${STATUS_LABEL[s]}</button>`).join('') +
+            `<button class="btn cx-ghost cx-icon" data-act="edit-bed" data-bed="${bed.id}" aria-label="Edit bed type and features" title="Edit bed">${icon('edit')}</button>`;
         }
       }
-      const primary = pl ? placeBox : bed.status === 'AVAILABLE'
-        ? `<button class="btn primary block" data-act="assign-to-bed" data-bed="${bed.id}">${icon('user')}Assign Patient</button>`
-        : bed.status === 'OCCUPIED' && bed.patient
-          ? `<button class="btn primary block" data-act="go" data-route="patients" data-params='${JSON.stringify({ patient: bed.patient.id })}'>${icon('user')}View patient ${esc(bed.patient.patient_code)}</button>`
-          : '';
-      return `<div class="bed-card">
-          <div class="bed-top">
-            <div class="bed-art st-${bed.status}">${bedThumb(bed.status, 'art-img')}</div>
-            <div class="bed-id"><h2>${esc(bed.bed_code)}</h2><span class="pill solid st-${bed.status}">${icon(bed.status === 'AVAILABLE' ? 'check' : 'info')}${STATUS_LABEL[bed.status]}</span><p>${esc(bed.bed_type)} Bed</p></div>
-            <button class="icon-btn plain" data-act="close-bed" aria-label="Close bed details">${icon('x')}</button>
-          </div>
-          <div class="tabs" role="tablist">${tabs.map((t) => `<button role="tab" aria-selected="${t === tab}" class="${t === tab ? 'on' : ''}" data-act="panel-tab" data-tab="${t}">${t[0].toUpperCase() + t.slice(1)}</button>`).join('')}</div>
-          <div class="tab-body" role="tabpanel">${content}</div>
-          ${transitions ? `<div class="transitions"><div class="btn-row wrap">${transitions}${bed.status !== 'OCCUPIED' ? `<button class="btn sm ghost" data-act="edit-bed" data-bed="${bed.id}">${icon('edit')}Edit</button>` : ''}</div></div>` : ''}
+
+      const members = beds.slice(gi * groupSize, (gi + 1) * groupSize);
+      const free = members.filter((b) => b.status === 'AVAILABLE').length;
+      insp.innerHTML = `<div class="cx-insp-head"><small>${esc(groupName(gi))} · ${esc(ward.name)}</small><small>${esc(bed.bed_type)} bed</small></div>
+        <div class="cx-hero st-${bed.status}">
+          <div class="cx-hero-id"><h2>${esc(bed.bed_code)}</h2><span class="pill st-${bed.status}"><i aria-hidden="true"></i>${STATUS_LABEL[bed.status]}</span></div>
+          ${bedThumb(bed.status, 'cx-hero-img')}
         </div>
-        ${primary ? `<div class="panel-foot">${primary}</div>` : ''}`;
+        <div class="tabs cx-tabs" role="tablist">${tabs.map((t) => `<button role="tab" aria-selected="${t === tab}" class="${t === tab ? 'on' : ''}" data-act="panel-tab" data-tab="${t}">${t[0].toUpperCase() + t.slice(1)}</button>`).join('')}</div>
+        <div class="cx-insp-body" role="tabpanel">${content}
+          <div class="cx-strip"><h5><button class="link" data-act="pick-group" data-group="${gi}">${esc(groupName(gi))}</button><span>${free} free</span></h5>
+            <div class="cx-mini-grid">${members.map((b) => `<button class="cx-mini st-${b.status} ${b.id === bed.id ? 'on' : ''} ${this.match && !this.match.has(b.id) ? 'dim' : ''}" data-act="pick-bed" data-bed="${b.id}" aria-label="${esc(b.bed_code)}, ${STATUS_LABEL[b.status]}"><i aria-hidden="true"></i>${esc(shortCode(b.bed_code))}</button>`).join('')}</div></div>
+        </div>
+        <div class="cx-actions">${primary}${secondary ? `<div class="cx-row">${secondary}</div>` : ''}</div>`;
     },
+    // Bottom dock: occupancy, beds ready now, patients waiting, live activity.
     renderBottom() {
       const w = this.ward;
-      $('#ex-overview').innerHTML = `<h2>Ward Overview</h2><div class="overview">${donut(w.counts, w.bed_count)}<ul class="legend">${MT.BED_STATUSES.map((st) => `<li><button class="link" data-act="chip-filter" data-status="${st}"><i class="dotc st-${st}"></i>${STATUS_LABEL[st]}</button><strong>${w.counts[st]}</strong></li>`).join('')}</ul></div>`;
-      $('#ex-activity').innerHTML = `<div class="card-head"><h2>Recent Activity</h2><a class="link small" href="#/alerts">View all</a></div>${activityList(api.activity({ limit: 5 }))}`;
-      $('#ex-quick').innerHTML = `<h2>Quick Actions</h2><div class="quick">
-        <button class="qa" data-act="register-patient">${icon('user')}Register Patient</button>
-        <button class="qa" data-act="go" data-route="patients" data-params='{"status":"WAITING"}'>${icon('bed')}Find Suitable Bed</button>
-        <button class="qa" data-act="view" data-view="list">${icon('list')}View All Beds</button>
-        <button class="qa" data-act="go" data-route="alerts">${icon('bell')}Check Alerts</button></div>`;
-      const alerts = api.alerts();
-      $('#ex-alerts').innerHTML = `<div class="card-head"><h2>Current Alerts</h2><a class="link small" href="#/alerts">View All</a></div>${alertList(alerts.slice(0, 4))}`;
+      const occPct = w.bed_count ? Math.round((w.counts.OCCUPIED / w.bed_count) * 100) : 0;
+      $('#ex-occ').innerHTML = `${donut(w.counts, w.bed_count)}<div><h6>Occupancy</h6><strong class="cx-big">${occPct}%</strong><p>${w.counts.OCCUPIED} occupied · ${w.counts.RESERVED} reserved</p></div>`;
+      $('#ex-ready').innerHTML = `<h6>Ready now</h6><strong class="cx-big st-AVAILABLE">${w.counts.AVAILABLE}</strong><p>available beds in ${esc(w.name)}</p>`;
+      const flow = api.patientFlow({ per_column: 0 });
+      const waiting = flow.totals.WAITING + flow.totals.MATCHING;
+      $('#ex-waiting').innerHTML = `<h6>Waiting</h6><strong class="cx-big st-RESERVED">${waiting}</strong><p>patients need a bed</p>`;
+      const DOT = { ALLOCATED: 'OCCUPIED', ADMITTED: 'OCCUPIED', RELEASED: 'AVAILABLE', ALLOCATION_CANCELLED: 'AVAILABLE', BED_STATUS: 'RESERVED', BEDS_GENERATED: 'CLEANING' };
+      const feed = api.activity({ limit: 4 });
+      $('#ex-activity').innerHTML = `<div class="cx-feed-head"><h6>Live activity</h6><a class="link small" href="#/alerts">View all</a></div>
+        ${feed.length ? `<ul class="cx-feed-list">${feed.map((a) => `<li class="st-${DOT[a.action] || 'CLEANING'}"><i aria-hidden="true"></i><span>${esc(a.message)}</span><time datetime="${esc(a.created_at)}">${esc(ago(a.created_at).replace(' ago', ''))}</time></li>`).join('')}</ul>` : '<p class="muted small">No activity yet.</p>'}`;
     },
   };
 

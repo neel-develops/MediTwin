@@ -240,29 +240,56 @@
       rig.target.x = Math.min(rig.bounds.x, Math.max(-rig.bounds.x, rig.target.x));
       rig.target.z = Math.min(rig.bounds.z, Math.max(-rig.bounds.z, rig.target.z));
     }
-    /** Distance at which the whole grid fills the stage from the default angle (measured by projecting its corners). */
-    function fitRadius() {
-      if (!layout) return 30;
-      const hw = layout.width / 2 + 0.3, hd = layout.depth / 2 + 0.3;
+    /**
+     * Camera distance and target that make the whole grid fill the stage from the default angle.
+     * Projects the grid's corners, then scales by the on-screen box and re-centres it (the projected
+     * diamond is not centred on the target), leaving room for the title overlay at the top.
+     */
+    // Overlay UI the page draws on top of the stage (title, status chips, tools), in stage pixels.
+    const obstacles = () => (opts.obstacles ? opts.obstacles() : []);
+    /** Vertical screen band (NDC) left free by overlays at the top and bottom of the stage. */
+    function freeBand() {
+      const h = container.clientHeight || 1;
+      let top = 0, bottom = 0;
+      for (const o of obstacles()) {
+        if (o.b <= h / 2) top = Math.max(top, o.b);
+        else if (o.t >= h / 2) bottom = Math.max(bottom, h - o.t);
+      }
+      const gap = 14;
+      const topN = 1 - (2 * (top + gap)) / h, botN = -1 + (2 * (bottom + gap)) / h;
+      const halfH = Math.max(0.25, (topN - botN) / 2);
+      return { halfH, centreY: (topN + botN) / 2 };
+    }
+    function fitView() {
+      if (!layout) return { r: 30, tx: 0, tz: 0 };
+      const band = freeBand();
+      const FIT = { halfW: 0.94, halfH: band.halfH, centreY: band.centreY };
+      // Use the real section trays, not the bounding rectangle: a part-filled last row leaves empty corners.
       const pts = [];
-      for (const x of [-hw, hw]) for (const z of [-hd, hd]) for (const y of [0, 1.6]) pts.push(new THREE.Vector3(x, y, z));
+      for (const g of layout.groups) {
+        for (const x of [g.x - g.w / 2, g.x + g.w / 2]) for (const z of [g.z - g.d / 2, g.z + g.d / 2]) for (const y of [0, 1.2]) pts.push(new THREE.Vector3(x, y, z));
+      }
       const saved = { radius: rig.radius, theta: rig.theta, phi: rig.phi, t: rig.target.clone() };
-      let r = 40;
-      for (let k = 0; k < 4; k++) {
-        Object.assign(rig, { radius: r, theta: 0.48, phi: 0.78 });
-        rig.target.set(0, 0, 0);
+      const theta = 0.48, phi = 0.78, half = Math.tan((camera.fov * Math.PI) / 360);
+      let r = 40, tx = 0, tz = 0;
+      for (let k = 0; k < 8; k++) {
+        Object.assign(rig, { radius: r, theta, phi });
+        rig.target.set(tx, 0, tz);
         applyCamera();
         camera.updateMatrixWorld();
-        let ext = 0;
-        for (const p of pts) {
-          const q = p.clone().project(camera);
-          ext = Math.max(ext, Math.abs(q.x) / 0.97, Math.abs(q.y) / 0.8); // leave room for labels and the toolbar
-        }
-        r *= ext;
+        let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
+        for (const p of pts) { const q = p.clone().project(camera); x0 = Math.min(x0, q.x); x1 = Math.max(x1, q.x); y0 = Math.min(y0, q.y); y1 = Math.max(y1, q.y); }
+        const cx = (x0 + x1) / 2, cy = (y0 + y1) / 2;
+        // move the target so the box centre lands at (0, centreY)
+        const halfH = half * r, halfW = halfH * camera.aspect;
+        tx += Math.cos(theta) * cx * halfW; tz -= Math.sin(theta) * cx * halfW;
+        const back = ((cy - FIT.centreY) * halfH) / Math.cos(phi);
+        tx -= Math.sin(theta) * back; tz -= Math.cos(theta) * back;
+        r *= Math.max((x1 - x0) / 2 / FIT.halfW, (y1 - y0) / 2 / FIT.halfH);
       }
       Object.assign(rig, { radius: saved.radius, theta: saved.theta, phi: saved.phi });
       rig.target.copy(saved.t);
-      return r;
+      return { r, tx, tz };
     }
     function animateTo(to, ms) {
       const from = { tx: rig.target.x, tz: rig.target.z, radius: rig.radius, theta: rig.theta, phi: rig.phi };
@@ -274,9 +301,10 @@
       kick();
     }
     function resetView(instant) {
-      const to = { tx: 0, tz: 0, radius: fitRadius(), theta: 0.48, phi: 0.78 };
+      const f = fitView();
+      const to = { tx: f.tx, tz: f.tz, radius: f.r, theta: 0.48, phi: 0.78 };
       rig.max = Math.max(to.radius * 2, 20);
-      if (instant) { tween = null; rig.target.set(0, 0, 0); Object.assign(rig, { radius: to.radius, theta: to.theta, phi: to.phi }); clampRig(); kick(); }
+      if (instant) { tween = null; rig.target.set(to.tx, 0, to.tz); Object.assign(rig, { radius: to.radius, theta: to.theta, phi: to.phi }); clampRig(); kick(); }
       else animateTo(to);
       userMoved = false;
     }
@@ -535,8 +563,14 @@
         renderer.render(scene, camera);
         needsRender = false;
         if (layout) {
-          // Section labels float above the back edge of each tray; drop any that would overlap.
-          const placed = [];
+          // Section labels float above the back edge of each tray; drop any that would overlap
+          // another label or the page's overlay UI (title, chips, tools).
+          const placed = obstacles().map((o) => ({ l: o.l - 4, r: o.r + 4, t: o.t - 4, b: o.b + 4 }));
+          const sel = selectedId != null ? indexById.get(selectedId) : undefined;
+          if (sel !== undefined) { // the selected-bed tag wins over section labels
+            const sp = project(layout.positions[sel].x, 1.55, layout.positions[sel].z - 0.9);
+            placed.push({ l: sp.x - 40, r: sp.x + 40, t: sp.y - 28, b: sp.y + 2 });
+          }
           const order = layout.groups.map((r, i) => i).sort((a, b) => (b === activeGroup) - (a === activeGroup) || a - b);
           for (const i of order) {
             const r = layout.groups[i];
@@ -609,6 +643,8 @@
       zoom(f) { tween = null; userMoved = true; rig.radius *= f; clampRig(); kick(); },
       rotate(rad) { animateTo({ theta: rig.theta + rad }, 350); },
       resetView: () => resetView(false),
+      /** Re-fit after the page's overlay UI changed size, unless the user has moved the camera. */
+      refit() { if (layout && !userMoved && !tween) resetView(true); else kick(); },
       setAutoRotate(on) { autoRotate = !!on; kick(); },
       get autoRotate() { return autoRotate; },
       dispose() {
