@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MediTwin</title>
+  <meta name="description" content="MediTwin — data-driven 3D hospital resource inventory and allocation prototype (synthetic demo data).">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css?v=11">
+  <script type="importmap">
+    { "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+    } }
+  </script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <div class="app">
+    <header class="topbar">
+      <a class="brand" href="#/dashboard" aria-label="MediTwin home">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <span class="brand-name">MediTwin</span>
+      </a>
+      <span class="brand-tag">Smarter Hospital Resource Allocation</span>
+      <nav class="crumbs" id="crumbs" aria-label="Breadcrumb"></nav>
+      <div class="global-search" role="search">
+        <label class="search-field">
+          <span class="sr-only">Search beds, wards, equipment or patients</span>
+          <span data-icon="search"></span>
+          <input id="global-search" type="search" autocomplete="off" placeholder="Search bed, ward, equipment or patient…" aria-controls="search-results" aria-expanded="false">
+        </label>
+        <div class="search-results" id="search-results" role="listbox" hidden></div>
+      </div>
+      <button class="icon-btn bell" id="alerts-btn" data-act="go" data-route="alerts" aria-label="Alerts">
+        <span data-icon="bell"></span><span class="badge" id="alerts-badge" hidden></span>
+      </button>
+      <div class="user-chip" title="Demo role — no real authentication">
+        <span class="avatar" aria-hidden="true">DS</span>
+        <span class="user-text"><strong>Demo Staff</strong><small>Allocation (demo role)</small></span>
+      </div>
+      <button class="icon-btn menu-btn" id="menu-btn" aria-label="Open navigation" aria-expanded="false"><span data-icon="list"></span></button>
+    </header>
+
+    <nav class="sidenav" id="sidenav" aria-label="Main">
+      <a href="#/dashboard" data-nav="dashboard"><span data-icon="home"></span>Dashboard</a>
+      <a href="#/explorer" data-nav="explorer"><span data-icon="cube"></span>3D Explorer</a>
+      <a href="#/patients" data-nav="patients"><span data-icon="user"></span>Patients</a>
+      <a href="#/beds" data-nav="beds"><span data-icon="bed"></span>Beds &amp; Resources</a>
+      <a href="#/equipment" data-nav="equipment"><span data-icon="monitor"></span>Equipment</a>
+      <a href="#/alerts" data-nav="alerts"><span data-icon="bell"></span>Alerts<span class="nav-badge" id="nav-alerts-badge" hidden></span></a>
+      <a href="#/reports" data-nav="reports"><span data-icon="chart"></span>Reports</a>
+      <a href="#/setup" data-nav="setup"><span data-icon="settings"></span>Setup &amp; Settings</a>
+      <div class="nav-foot">
+        <div class="demo-card">
+          <div class="demo-line"><span class="dot"></span>Demo data</div>
+          <small>Fictional records stored in this browser. Not connected to any hospital system.</small>
+          <small id="last-updated"></small>
+        </div>
+      </div>
+    </nav>
+
+    <main id="main" tabindex="-1"></main>
+  </div>
+  <div id="modal-root"></div>
+  <div class="toasts" id="toasts" role="status" aria-live="polite"></div>
+
+  <script src="js/services.js?v=11"></script>
+  <script src="js/scene.js?v=11"></script>
+  <script src="js/app.js?v=11"></script>
+</body>
+</html>
