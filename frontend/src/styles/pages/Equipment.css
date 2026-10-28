@@ -1,0 +1,39 @@
+/* Equipment — additions on top of Graphite (tokens only): clickable stat cards, utilisation bar, counted stock list. */
+
+/* her .stat card rendered as a toggle button (type filter) */
+button.stat.eq-stat { font: inherit; color: inherit; text-align: left; cursor: pointer; align-items: stretch;
+  transition: border-color .15s, box-shadow .15s, transform .16s cubic-bezier(.23,1,.32,1); }
+button.stat.eq-stat:hover { border-color: var(--brand-300); }
+button.stat.eq-stat:focus-visible { outline: none; box-shadow: var(--shadow), var(--focus); }
+button.stat.eq-stat:active { transform: scale(.98); }
+button.stat.eq-stat.on { border-color: rgba(var(--accent-rgb), .6); border-top-color: var(--accent); background: rgba(var(--accent-rgb), .1);
+  box-shadow: var(--shadow), 0 0 0 1px rgba(var(--accent-rgb), .35); }
+.eq-stat .stat-label .ico { width: 14px; height: 14px; }
+
+.eq-util { display: flex; flex-direction: column; gap: 4px; margin-top: 6px; }
+.eq-util small { color: var(--text-2); }
+
+/* thin segmented bar */
+.eq-bar { display: flex; gap: 2px; height: 6px; border-radius: 6px; overflow: hidden; background: var(--border-soft); }
+.eq-bar i { display: block; height: 100%; background: var(--c, var(--accent)); transition: width .3s cubic-bezier(.23,1,.32,1); }
+.eq-bar i.st-IN_USE { --c: var(--accent); }
+
+.eq-skeleton { display: flex; flex-direction: column; gap: 6px; }
+
+/* counted stock */
+.card-head h2 + p { margin-top: 2px; }
+.eq-stock { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 10px; }
+.eq-stock-row { display: flex; flex-direction: column; gap: 8px; padding: 12px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface-2); }
+.eq-stock-row > .btn { align-self: flex-end; }
+.eq-stock-name { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.eq-stock-name small { font-size: 12px; text-align: right; }
+.eq-stepper { display: flex; align-items: center; gap: 8px; }
+.eq-stepper .icon-btn { border: 1px solid var(--border); }
+.eq-stepper .icon-btn:disabled { opacity: .4; cursor: not-allowed; }
+.eq-count { flex: 1; text-align: center; }
+.eq-count strong { font-size: 20px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.eq-count small { color: var(--text-2); }
+
+@media (prefers-reduced-motion: reduce) {
+  button.stat.eq-stat, .eq-bar i { transition: none; }
+}

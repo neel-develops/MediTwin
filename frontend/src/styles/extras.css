@@ -1,0 +1,90 @@
+/* Shared additions for features the design commit did not have (AI, assistant, live data).
+   Built only from Graphite tokens in graphite.css — no new colours. */
+
+#root { min-height: 100%; }
+.num { font-variant-numeric: tabular-nums; }
+.code { font-family: 'JetBrains Mono Variable', ui-monospace, monospace; font-size: .95em; letter-spacing: -.01em; }
+
+/* main scroll area is the grid cell; keep our page wrapper consistent with hers */
+main .page { padding-bottom: 6px; }
+
+/* AI tag — accent only, the palette has no extra colour for AI */
+.ai-tag { display: inline-flex; align-items: center; gap: 5px; font-size: 10.5px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase;
+  padding: 2px 8px; border-radius: 999px; background: rgba(var(--accent-rgb), .14); color: var(--accent); border: 1px solid rgba(var(--accent-rgb), .3); white-space: nowrap; }
+.ai-tag .ico { width: 12px; height: 12px; }
+.card.ai { border-color: rgba(var(--accent-rgb), .35); box-shadow: var(--shadow), 0 0 0 1px rgba(var(--accent-rgb), .08), 0 0 60px -20px rgba(var(--accent-rgb), .45); }
+
+/* match score */
+.score { display: inline-grid; place-items: center; min-width: 40px; height: 24px; padding: 0 7px; border-radius: 8px; font-size: 12px; font-weight: 800;
+  font-variant-numeric: tabular-nums; background: rgba(var(--mint-rgb), .14); color: var(--mint); }
+.score.mid { background: rgba(var(--accent-rgb), .14); color: var(--accent); }
+.score.low { background: rgba(var(--amber-rgb), .14); color: var(--amber); }
+
+.factors { display: flex; flex-direction: column; gap: 6px; }
+.factor { display: grid; grid-template-columns: 140px 1fr 46px; gap: 8px; align-items: center; font-size: 12px; color: var(--text-2); }
+.factor .bar { height: 6px; border-radius: 6px; background: var(--border-soft); overflow: hidden; }
+.factor .bar i { display: block; height: 100%; border-radius: 6px; background: var(--accent); }
+.factor .bar i.hi { background: var(--mint); }
+.factor .bar i.lo { background: var(--amber); }
+.factor b { text-align: right; color: var(--text); font-variant-numeric: tabular-nums; }
+.factor b small { color: var(--text-3); font-weight: 500; }
+
+/* unlock suggestions */
+.unlock { display: flex; align-items: center; gap: 10px; padding: 9px 11px; border-radius: 12px; border: 1px dashed rgba(var(--accent-rgb), .4); background: rgba(var(--accent-rgb), .06); }
+.unlock > .ico { color: var(--accent); width: 16px; height: 16px; }
+.unlock div { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.unlock strong { font-size: 13px; }
+.unlock small { color: var(--text-2); font-size: 12px; }
+.unlock-list { display: flex; flex-direction: column; gap: 6px; }
+
+/* side drawer (assistant) — glass panel sliding from the right */
+.drawer-backdrop { position: fixed; inset: 0; background: rgba(var(--base-rgb), .45); backdrop-filter: blur(2px); z-index: 60; animation: tin .2s ease-out; }
+.drawer { position: fixed; top: 14px; right: 14px; bottom: 14px; width: min(460px, calc(100vw - 28px)); z-index: 61; display: flex; flex-direction: column;
+  background: var(--panel); border: 1px solid var(--border); border-radius: 22px; box-shadow: var(--shadow-lg); outline: none;
+  animation: drawer-in .28s cubic-bezier(.32,.72,0,1) both; }
+@keyframes drawer-in { from { transform: translateX(calc(100% + 20px)); } }
+.drawer > header { display: flex; align-items: center; gap: 12px; padding: 16px 16px 12px 18px; border-bottom: 1px solid var(--border); }
+.drawer-body { flex: 1; overflow: auto; padding: 16px 18px; }
+.drawer > footer { padding: 12px 14px 14px; border-top: 1px solid var(--border); }
+
+/* loading */
+.skeleton { border-radius: 12px; background: linear-gradient(90deg, rgba(var(--pearl-rgb), .04), rgba(var(--pearl-rgb), .09), rgba(var(--pearl-rgb), .04)); background-size: 200% 100%; animation: shimmer 1.5s linear infinite; }
+@keyframes shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+.spin { animation: spin .7s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-line { display: flex; align-items: center; gap: 8px; color: var(--text-2); font-size: 13px; }
+
+/* kbd hint */
+.kbd { display: inline-block; font: 700 10px/1 'JetBrains Mono Variable', monospace; padding: 3px 5px; border-radius: 6px; border: 1px solid var(--border-strong); color: var(--text-2); background: var(--well); }
+
+/* topbar AI button */
+.ai-btn { display: inline-flex; align-items: center; gap: 8px; height: var(--h-control); padding: 0 12px; border-radius: 999px; border: 1px solid rgba(var(--accent-rgb), .35);
+  background: rgba(var(--accent-rgb), .1); color: var(--text); font-weight: 700; cursor: pointer; white-space: nowrap; }
+.ai-btn:hover { background: rgba(var(--accent-rgb), .18); border-color: rgba(var(--accent-rgb), .55); }
+.ai-btn .ico { color: var(--accent); width: 16px; height: 16px; }
+
+/* press feedback */
+.btn, .icon-btn, .qa, .pf-tab, .status-chip, .ward-item, .tile, .mini, .pcard, .stage-tile, .ai-btn { -webkit-tap-highlight-color: transparent; }
+.btn:active:not(:disabled), .icon-btn:active, .qa:active, .ai-btn:active { transform: scale(.97); }
+.btn, .icon-btn, .qa, .ai-btn { transition: transform .16s cubic-bezier(.23,1,.32,1), background .15s, border-color .15s, box-shadow .15s, color .15s; }
+
+/* error / 404 */
+.page-error { display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center; padding: 40px 20px; }
+.page-error .ico { width: 28px; height: 28px; color: var(--amber); }
+
+@media (max-width: 900px) {
+  .ai-btn span.lbl, .ai-btn .kbd { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .drawer, .drawer-backdrop, .skeleton, .spin { animation: none; }
+}
+
+/* Kept from the design's v23 stylesheet (v39 dropped them with the old Bed Allocations layout);
+   still used by the AI workspace tabs and the assistant's starter buttons. Verbatim. */
+.seg-toggle { display: inline-flex; border: 1px solid var(--border-strong); border-radius: 10px; overflow: hidden; background: rgba(var(--panel-rgb), .92); margin-left: auto; }
+.seg-toggle button { display: inline-flex; align-items: center; gap: 6px; border: 0; background: none; padding: 0 12px; height: 32px; cursor: pointer; font-weight: 600; color: var(--text-2); font-size: 13px; }
+.seg-toggle button .ico { width: 15px; height: 15px; }
+.seg-toggle button[aria-pressed="true"] { background: var(--brand-600); color: var(--on-solid); }
+.quick { display: grid; grid-template-columns: 1fr; gap: 8px; }
+.qa { display: flex; align-items: center; gap: 10px; padding: 11px 12px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface-2); color: var(--brand-700); font-weight: 600; cursor: pointer; text-align: left; }
+.qa:hover { background: var(--brand-50); border-color: var(--border-strong); }

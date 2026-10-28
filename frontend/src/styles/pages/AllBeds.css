@@ -1,0 +1,6 @@
+/* All beds — small additions on top of the Graphite table (tokens only). */
+.table tr.ab-row { cursor: pointer; }
+.table tr.ab-row:hover td { background: var(--hover); }
+.ab-count { display: inline-flex; align-items: center; gap: 4px; }
+.ab-sync { width: 14px; height: 14px; color: var(--text-3); }
+.ab-skeleton { display: flex; flex-direction: column; gap: 6px; }

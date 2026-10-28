@@ -1,0 +1,10 @@
+/* Reports — small additions on top of graphite.css (palette variables only). */
+.rp-sources { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.rp-sources .chip b { color: var(--text); font-weight: 700; }
+.rp-hist .table-wrap { max-height: 480px; }
+.rp-hist .table td.num, .rp-sim .table td.num { font-variant-numeric: tabular-nums; }
+.rp-sim .sim-hint { margin: 0; }
+.rp-sim .sim-err { color: var(--coral); font-size: 13px; margin: 0 0 8px; }
+.rp-sim .sim-placed { font-size: 13px; color: var(--text-2); margin: 0; }
+.rp-sim .sim-placed strong { color: var(--text); font-size: 18px; font-variant-numeric: tabular-nums; }
+.rp-muted-dash { color: var(--text-2); }

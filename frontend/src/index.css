@@ -1,0 +1,52 @@
+@import 'tailwindcss';
+@import './styles/graphite.css';
+@import './styles/extras.css';
+
+/* Tailwind is kept for layout utilities only. Its colour tokens are remapped onto the Graphite
+   palette so any utility colour still resolves to one of the 10 theme colours. */
+@theme {
+  --font-sans: 'Manrope Variable', Manrope, system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono Variable', ui-monospace, monospace;
+
+  --color-ink-950: #eef3f6;
+  --color-ink-900: #eef3f6;
+  --color-ink-800: #eef3f6;
+  --color-ink-700: #8da4b3;
+  --color-ink-600: #8da4b3;
+  --color-ink-500: #8da4b3;
+  --color-ink-400: rgb(141 164 179 / 0.7);
+  --color-ink-300: rgb(238 243 246 / 0.18);
+  --color-ink-200: rgb(238 243 246 / 0.12);
+  --color-ink-150: rgb(238 243 246 / 0.1);
+  --color-ink-100: rgb(238 243 246 / 0.06);
+  --color-ink-50: rgb(238 243 246 / 0.035);
+
+  --color-brand-50: rgb(125 180 230 / 0.14);
+  --color-brand-100: rgb(125 180 230 / 0.22);
+  --color-brand-200: rgb(125 180 230 / 0.35);
+  --color-brand-300: rgb(125 180 230 / 0.55);
+  --color-brand-400: #7db4e6;
+  --color-brand-500: #7db4e6;
+  --color-brand-600: #7db4e6;
+  --color-brand-700: #7db4e6;
+  --color-brand-800: #7db4e6;
+
+  --color-ai-50: rgb(125 180 230 / 0.14);
+  --color-ai-100: rgb(125 180 230 / 0.22);
+  --color-ai-500: #7db4e6;
+  --color-ai-600: #7db4e6;
+
+  --color-st-available: #5ed3a5;
+  --color-st-available-bg: rgb(94 211 165 / 0.14);
+  --color-st-occupied: #f3786a;
+  --color-st-occupied-bg: rgb(243 120 106 / 0.14);
+  --color-st-reserved: #f4c35a;
+  --color-st-reserved-bg: rgb(244 195 90 / 0.14);
+  --color-st-cleaning: #8da4b3;
+  --color-st-cleaning-bg: rgb(141 164 179 / 0.14);
+  --color-st-maintenance: #4f6e85;
+  --color-st-maintenance-bg: rgb(79 110 133 / 0.3);
+
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+}

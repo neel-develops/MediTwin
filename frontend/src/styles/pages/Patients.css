@@ -1,0 +1,25 @@
+/* Patient Flow — small additions for our features, using only Graphite tokens. */
+.pf-skel-tile { flex: 1; min-width: 0; }
+.pc-tags { display: inline-flex; align-items: center; gap: 5px; flex: none; }
+.pc-tags .ai-tag { font-size: 9.5px; }
+
+.pd-match-head h3.sub { display: inline-flex; align-items: center; gap: 8px; }
+.rc-top .score { flex: none; }
+.rc-dev { display: flex; align-items: center; gap: 5px; margin-top: 6px; font-size: 11.5px; color: var(--text-2); }
+.rc-dev .ico { width: 13px; height: 13px; color: var(--brand-600); flex: none; }
+.rc-explain { margin-top: 6px; font-size: 12px; }
+.rc-explain .ico { width: 13px; height: 13px; }
+.rc-explain .rc-chev { transition: transform .18s ease; }
+.rc-explain.on .rc-chev { transform: rotate(180deg); }
+.rec-card .factors { margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--border-soft); }
+.rec-card .factor { grid-template-columns: 110px 1fr 46px; }
+
+.pd-blockers { margin: 6px 0 0; padding-left: 16px; font-size: 12.5px; color: var(--text-body); }
+.pd-blockers li + li { margin-top: 2px; }
+.pd-ai-head { display: flex; align-items: center; gap: 8px; }
+.pd-ai-head h3.sub { margin: 6px 0 0; }
+.pd-ai-head .ai-tag { margin-top: 6px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .rc-explain .rc-chev { transition: none; }
+}

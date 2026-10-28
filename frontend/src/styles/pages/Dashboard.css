@@ -1,0 +1,123 @@
+/* Dashboard — one-screen overview. Only Graphite tokens from graphite.css.
+   main height = 100vh − app padding (28) − top bar (64) − grid gap (14) − main bottom padding (10). */
+
+.dash { gap: 12px; }
+.dash .page-head h1 { font-size: 20px; }
+.dash .page-head p { margin-top: 2px; font-size: 13px; }
+
+/* her original dashboard stat strip: 8 cards */
+.dash-stats { grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 10px; }
+.dash-stats .stat { padding: 11px 13px; height: 100%; }
+.dash-stats .stat strong { font-size: 24px; }
+.dash-stats .stat > small { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.stat-link { display: block; text-decoration: none; color: inherit; border-radius: var(--radius); transition: transform .18s cubic-bezier(.23,1,.32,1); }
+.stat-link:hover { transform: translateY(-2px); }
+.stat-link:hover .stat { border-color: var(--border-strong); }
+.stat-link:active { transform: scale(.98); }
+
+/* 3 × 2 card grid that fills the rest of the screen */
+.dash-grid {
+  display: grid; gap: 12px; min-height: 0;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1.15fr) minmax(0, .85fr);
+  grid-template-rows: minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-areas: "wards brief overview" "forecast queue alerts";
+}
+.d-wards { grid-area: wards; }
+.d-brief { grid-area: brief; }
+.d-overview { grid-area: overview; }
+.d-forecast { grid-area: forecast; }
+.d-queue { grid-area: queue; }
+.d-alerts { grid-area: alerts; }
+.dash-grid > .card { display: flex; flex-direction: column; min-height: 0; padding: 14px 16px; overflow: hidden; }
+.dash-grid .card-head { margin-bottom: 10px; flex-wrap: nowrap; }
+.dash-grid .card-head h2 { font-size: 15px; white-space: nowrap; }
+.dash-grid .card-head h2 .ico { width: 16px; height: 16px; color: var(--accent); }
+.d-body { flex: 1; min-height: 0; overflow: auto; margin-right: -6px; padding-right: 6px; }
+.d-foot { margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border-soft); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sk-list { display: flex; flex-direction: column; gap: 8px; }
+
+/* ward capacity rows */
+.ward-sum { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 5px; }
+.ward-row { display: grid; grid-template-columns: minmax(130px, 1.1fr) minmax(80px, 1.2fr) 64px 58px; min-height: 36px; gap: 12px; align-items: center; width: 100%;
+  padding: 5px 10px; border: 1px solid var(--border); border-radius: 11px; background: var(--surface-2); cursor: pointer; text-align: left; transition: background .15s, border-color .15s; }
+.ward-row:hover { background: var(--hover); border-color: var(--border-strong); }
+.wr-name { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
+.wr-name strong { font-size: 13px; white-space: nowrap; }
+.wr-name small { color: var(--text-2); font-size: 11.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.wr-bar .stack { height: 9px; }
+.wr-free { display: flex; align-items: baseline; justify-content: flex-end; gap: 4px; line-height: 1.1; }
+.wr-free b { font-size: 16px; color: var(--mint); font-variant-numeric: tabular-nums; }
+.wr-free.low b { color: var(--amber); }
+.wr-free.none b { color: var(--coral); }
+.wr-free small { font-size: 10.5px; color: var(--text-2); }
+.wr-peak { display: flex; justify-content: flex-end; }
+.wr-peak .chip { font-variant-numeric: tabular-nums; }
+
+/* AI briefing */
+.brief-headline { font-size: 13.5px; font-weight: 600; line-height: 1.45; color: var(--text); }
+.brief-metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin: 8px 0; }
+.brief-metrics > div { display: flex; flex-direction: column; gap: 1px; padding: 5px 9px; border-radius: 11px; background: rgba(var(--accent-rgb), .08); border: 1px solid rgba(var(--accent-rgb), .2); }
+.brief-metrics strong { font-size: 18px; line-height: 1.15; font-variant-numeric: tabular-nums; }
+.brief-metrics strong small { font-size: 12px; color: var(--text-2); font-weight: 600; }
+.brief-metrics strong.up { color: var(--mint); }
+.brief-metrics > div > small { font-size: 10.5px; color: var(--text-2); white-space: nowrap; }
+.brief-list { gap: 6px; }
+.brief-list li { padding: 6px 10px; grid-template-columns: 18px minmax(0, 1fr) auto; }
+.brief-list li strong { font-size: 12.5px; }
+.brief-list li small { font-size: 11.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.brief-list li div { min-width: 0; }
+.brief-list li strong { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.brief-list .ico { width: 16px; height: 16px; }
+.brief-list .brief-ico { color: var(--accent); }
+.brief-list .link { font-size: 12px; white-space: nowrap; }
+
+/* bed overview */
+.d-overview .overview { gap: 16px; flex-wrap: nowrap; height: 100%; }
+.d-overview .donut { width: 128px; height: 128px; }
+.d-overview .legend { min-width: 0; gap: 6px; }
+.d-overview .legend li { font-size: 13px; }
+.d-overview .legend .link { gap: 8px; }
+
+/* forecast */
+.fc-figs { display: grid; grid-template-columns: .8fr .9fr 1.3fr; gap: 6px; margin-bottom: 6px; }
+.fc-figs > div { display: flex; flex-direction: column; padding: 6px 9px; border-radius: 11px; background: var(--surface-2); border: 1px solid var(--border); min-width: 0; }
+.fc-figs small { font-size: 10.5px; color: var(--text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fc-figs strong { font-size: 17px; line-height: 1.2; font-variant-numeric: tabular-nums; }
+.fc-figs .fc-ward { font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fc-chart { overflow: hidden; margin-right: 0; padding-right: 0; min-height: 80px; }
+
+/* admission queue */
+.q-table { font-size: 12.5px; }
+.q-table th { position: sticky; top: 0; z-index: 1; background: var(--panel); }
+.q-table td { padding: 7px 10px; }
+.q-table td:first-child .link { display: block; }
+.q-meta { display: flex; align-items: center; gap: 6px; margin-top: 2px; }
+.q-meta small { white-space: nowrap; }
+.q-match { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.q-match > span { display: flex; flex-direction: column; line-height: 1.25; }
+.q-match small { font-size: 11px; }
+.q-blocker { display: inline-flex; align-items: flex-start; gap: 6px; color: var(--coral); font-size: 12px; }
+.q-blocker .ico { width: 14px; height: 14px; margin-top: 1px; flex: none; }
+.q-table td.actions { text-align: right; width: 1%; }
+
+/* alerts */
+.d-alerts .alerts li { padding: 8px 10px; }
+.d-alerts .alerts li strong { font-size: 12.5px; }
+.d-alerts .alerts li small { font-size: 11.5px; }
+
+/* one screen only where it fits; otherwise stack normally */
+@media (min-width: 1200px) and (min-height: 720px) {
+  .dash { height: calc(100vh - 116px); }
+  .dash-grid { flex: 1; }
+}
+@media (max-width: 1199px), (max-height: 719px) {
+  .dash-grid { grid-template-columns: 1fr 1fr; grid-template-rows: none; grid-template-areas: "wards brief" "overview forecast" "queue alerts"; }
+  .dash-grid > .card { max-height: 460px; }
+  .fc-chart { height: 200px; flex: none; }
+  .dash-stats { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+@media (max-width: 900px) {
+  .dash-grid { grid-template-columns: 1fr; grid-template-areas: "brief" "wards" "overview" "forecast" "queue" "alerts"; }
+  .dash-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .d-overview .overview { flex-wrap: wrap; }
+}

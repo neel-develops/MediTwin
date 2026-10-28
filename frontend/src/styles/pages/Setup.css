@@ -1,0 +1,2 @@
+/* Setup page addition (Graphite tokens only): the status-mix column from our app. */
+.setup-page td.setup-mix { min-width: 140px; }
