@@ -19,10 +19,12 @@
     import('three/addons/environments/RoomEnvironment.js'),
   ]).then(([THREE, rb, re]) => ({ THREE, RoundedBox: rb.RoundedBoxGeometry, RoomEnvironment: re.RoomEnvironment })));
 
-  const STATUS_COLORS = { AVAILABLE: '#22b573', OCCUPIED: '#ef4f55', RESERVED: '#f5a524', CLEANING: '#66758c', MAINTENANCE: '#8b5cf6' };
+  // Graphite palette (same 10 colours as styles.css)
+  const PAL = { base: '#111315', panel: '#1b1f23', raised: '#2c3238', slate: '#4f6e85', fog: '#8da4b3', pearl: '#eef3f6', accent: '#7db4e6', mint: '#5ed3a5', coral: '#f3786a', amber: '#f4c35a' };
+  const STATUS_COLORS = { AVAILABLE: PAL.mint, OCCUPIED: PAL.coral, RESERVED: PAL.amber, CLEANING: PAL.fog, MAINTENANCE: PAL.slate };
   const STATUS_LABEL = { AVAILABLE: 'Available', OCCUPIED: 'Occupied', RESERVED: 'Reserved', CLEANING: 'Cleaning', MAINTENANCE: 'Maintenance' };
-  const DIM = '#d5dce6';
-  const DIM_LIGHT = '#e9edf3';
+  const DIM = PAL.raised;
+  const DIM_LIGHT = PAL.panel;
 
   const BED_W = 1.0, BED_L = 2.0, GAP_X = 0.42, GAP_Z = 0.75, PAD = 0.6, GROUP_GAP = 1.5;
 
@@ -64,9 +66,9 @@
   /** Part list for one bed. `at` = local offsets; `color` = which parts take the status colour. */
   function bedParts(lib) {
     const { THREE, RoundedBox: RB } = lib;
-    const metal = new THREE.MeshPhysicalMaterial({ color: '#e3e9f1', roughness: 0.32, metalness: 0.45, clearcoat: 0.6 });
-    const dark = new THREE.MeshStandardMaterial({ color: '#39445a', roughness: 0.55 });
-    const white = new THREE.MeshPhysicalMaterial({ color: '#f4f7fb', roughness: 0.55, clearcoat: 0.25, envMapIntensity: 0.45 });
+    const metal = new THREE.MeshPhysicalMaterial({ color: PAL.raised, roughness: 0.35, metalness: 0.4, clearcoat: 0.6 });
+    const dark = new THREE.MeshStandardMaterial({ color: PAL.base, roughness: 0.55 });
+    const white = new THREE.MeshPhysicalMaterial({ color: PAL.pearl, roughness: 0.55, clearcoat: 0.25, envMapIntensity: 0.3 });
     const tinted = () => new THREE.MeshPhysicalMaterial({ color: '#ffffff', roughness: 0.42, clearcoat: 0.9, clearcoatRoughness: 0.18, envMapIntensity: 0.3 });
     const wheel = new THREE.CylinderGeometry(0.065, 0.065, 0.05, 16); wheel.rotateZ(Math.PI / 2);
     return [
@@ -85,8 +87,8 @@
   }
 
   function statusColor(THREE, status, role) {
-    const c = new THREE.Color(STATUS_COLORS[status] || '#999');
-    return role === 'light' ? c.lerp(new THREE.Color('#ffffff'), 0.55) : c;
+    if (role === 'light') return new THREE.Color(PAL.pearl); // folded sheet edge
+    return new THREE.Color(STATUS_COLORS[status] || PAL.fog);
   }
 
   function addLights(lib, scene, renderer) {
@@ -94,7 +96,7 @@
     const pmrem = new THREE.PMREMGenerator(renderer);
     scene.environment = pmrem.fromScene(new RoomEnvironment(renderer), 0.04).texture;
     pmrem.dispose();
-    scene.add(new THREE.HemisphereLight(0xffffff, 0xcad8ee, 0.55));
+    scene.add(new THREE.HemisphereLight(0xffffff, 0x2c3238, 0.7));
     const sun = new THREE.DirectionalLight(0xffffff, 1.25);
     sun.position.set(-8, 16, 10);
     scene.add(sun);
@@ -188,18 +190,18 @@
     sun.shadow.normalBias = 0.03;
     scene.add(sun.target);
 
-    const ground = new THREE.Mesh(new THREE.PlaneGeometry(400, 400), new THREE.ShadowMaterial({ opacity: 0.1 }));
+    const ground = new THREE.Mesh(new THREE.PlaneGeometry(400, 400), new THREE.ShadowMaterial({ color: PAL.base, opacity: 0.55 }));
     ground.rotation.x = -Math.PI / 2;
     ground.position.y = -0.17;
     ground.receiveShadow = true;
     scene.add(ground);
 
     const parts = bedParts(lib);
-    const trayMat = new THREE.MeshPhysicalMaterial({ color: '#dce9fb', roughness: 0.22, clearcoat: 1, clearcoatRoughness: 0.15, transparent: true, opacity: 0.88, envMapIntensity: 0.8 });
-    const trayActive = trayMat.clone(); trayActive.color.set('#c6dcfb');
-    const rimMat = new THREE.MeshPhysicalMaterial({ color: '#ffffff', roughness: 0.1, clearcoat: 1, transparent: true, opacity: 0.55, envMapIntensity: 1 });
-    const ringMat = new THREE.MeshBasicMaterial({ color: '#1f6feb', transparent: true, opacity: 0.9, side: THREE.DoubleSide });
-    const hoverMat = new THREE.MeshBasicMaterial({ color: '#6ea8ff', transparent: true, opacity: 0.6, side: THREE.DoubleSide });
+    const trayMat = new THREE.MeshPhysicalMaterial({ color: PAL.pearl, roughness: 0.22, clearcoat: 1, clearcoatRoughness: 0.15, transparent: true, opacity: 0.07, envMapIntensity: 0.6 });
+    const trayActive = trayMat.clone(); trayActive.color.set(PAL.accent); trayActive.opacity = 0.16;
+    const rimMat = new THREE.MeshPhysicalMaterial({ color: PAL.pearl, roughness: 0.1, clearcoat: 1, transparent: true, opacity: 0.16, envMapIntensity: 0.8 });
+    const ringMat = new THREE.MeshBasicMaterial({ color: PAL.accent, transparent: true, opacity: 0.95, side: THREE.DoubleSide });
+    const hoverMat = new THREE.MeshBasicMaterial({ color: PAL.fog, transparent: true, opacity: 0.7, side: THREE.DoubleSide });
     const ringGeo = new THREE.RingGeometry(0.78, 0.92, 48);
     const ring = new THREE.Mesh(ringGeo, ringMat);
     ring.rotation.x = -Math.PI / 2; ring.scale.set(1, 1.55, 1); ring.visible = false;

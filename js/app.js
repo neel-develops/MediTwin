@@ -64,6 +64,7 @@
     db: '<ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5"/><path d="M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/>',
     hospital: '<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M12 7v6M9 10h6M9 21v-4h6v4"/>',
     clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+    gear: '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>',
     steth: '<path d="M5 3v6a5 5 0 0 0 10 0V3"/><path d="M10 14v2a5 5 0 0 0 10 0v-2"/><circle cx="20" cy="12" r="2"/>',
     scissors: '<circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M20 4 8.1 15.9M14.5 14.5 20 20M8.1 8.1 12 12"/>',
     heart: '<path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8z"/>',
@@ -165,7 +166,7 @@
 
   // ------------------------------------------------------------------ routing
   const S = {
-    route: 'dashboard', params: {},
+    route: 'allocations', params: {},
     wardId: null, bedId: null, group: 0, panelTab: 'details', view: '3d',
     exFilters: { status: '', bed_type: '', search: '' }, wardSearch: '',
     patientId: null, pSearch: '', pStatus: '', recs: null,
@@ -174,12 +175,20 @@
     actFilter: '', sim: null,
   };
 
+  const DEFAULT_ROUTE = 'allocations';
+  // Old links keep working: the 3D Explorer became Bed Allocations, and the Dashboard was removed.
+  const LEGACY_ROUTES = { explorer: 'allocations', dashboard: 'allocations' };
+  // Pages that are not in the sidebar highlight the section they belong to.
+  const NAV_SECTION = { beds: 'allocations' };
+  const ROUTE_TITLES = { allocations: 'Bed Allocations', patients: 'Patients', beds: 'All beds', equipment: 'Equipment', alerts: 'Alerts', reports: 'Reports', setup: 'Setup', settings: 'Settings' };
+
   function parseHash() {
     const h = location.hash.replace(/^#\/?/, '');
     const [path, query] = h.split('?');
     const params = {};
     new URLSearchParams(query || '').forEach((v, k) => { params[k] = v; });
-    return { route: PAGES[path] ? path : 'dashboard', params };
+    const route = LEGACY_ROUTES[path] || path;
+    return { route: PAGES[route] ? route : DEFAULT_ROUTE, params, redirected: route !== path || !PAGES[route] };
   }
   function go(route, params) {
     const q = new URLSearchParams(params || {}).toString();
@@ -193,11 +202,15 @@
 
   let currentPage = null;
   function onRoute() {
-    const { route, params } = parseHash();
+    const { route, params, redirected } = parseHash();
+    if (redirected) replaceHash(route, params); // show the canonical address without adding a history entry
     const sameRoute = currentPage && S.route === route;
     S.route = route; S.params = params;
-    $$('[data-nav]').forEach((a) => a.classList.toggle('active', a.dataset.nav === route));
-    $$('[data-nav]').forEach((a) => (a.dataset.nav === route ? a.setAttribute('aria-current', 'page') : a.removeAttribute('aria-current')));
+    const section = NAV_SECTION[route] || route;
+    $$('[data-nav]').forEach((a) => a.classList.toggle('active', a.dataset.nav === section));
+    $$('[data-nav]').forEach((a) => (a.dataset.nav === section ? a.setAttribute('aria-current', 'page') : a.removeAttribute('aria-current')));
+    document.title = `${ROUTE_TITLES[route]} · MediTwin`;
+    $('#page-title').textContent = ROUTE_TITLES[route];
     closeNav();
     if (!sameRoute) {
       if (currentPage && currentPage.unmount) currentPage.unmount();
@@ -225,10 +238,10 @@
     $('#alerts-btn').setAttribute('aria-label', `Alerts (${n} need attention)`);
     const last = api.activity({ limit: 1 })[0];
     $('#last-updated').textContent = last ? `Last change ${ago(last.created_at)}` : '';
-    const crumbs = [`<a href="#/dashboard">${icon('hospital')}Hospital (demo)</a>`];
-    const titles = { dashboard: 'Dashboard', explorer: '3D Explorer', patients: 'Patients', beds: 'Beds & Resources', equipment: 'Equipment', alerts: 'Alerts', reports: 'Reports', setup: 'Setup & Settings' };
-    crumbs.push(`<a href="#/${S.route}">${esc(titles[S.route])}</a>`);
-    if (S.route === 'explorer' && S.wardId) {
+    const crumbs = [`<a href="#/${DEFAULT_ROUTE}">${icon('hospital')}Hospital (demo)</a>`];
+    if (NAV_SECTION[S.route]) crumbs.push(`<a href="#/${NAV_SECTION[S.route]}">${esc(ROUTE_TITLES[NAV_SECTION[S.route]])}</a>`);
+    crumbs.push(`<a href="#/${S.route}">${esc(ROUTE_TITLES[S.route])}</a>`);
+    if (S.route === 'allocations' && S.wardId) {
       const w = attempt(() => api.getWard(S.wardId));
       if (w) crumbs.push(`<span aria-current="page">${icon('layers')}${esc(w.name)}</span>`);
     }
@@ -247,8 +260,8 @@
       if (!q) { close(); return; }
       const r = api.search(q);
       items = [
-        ...r.beds.map((b) => ({ label: b.bed_code, sub: `Bed · ${b.ward_name}`, status: b.status, go: () => go('explorer', { ward: b.ward_id, bed: b.id }) })),
-        ...r.wards.map((w) => ({ label: w.name, sub: `Ward · prefix ${w.bed_code_prefix}${w.is_active ? '' : ' · inactive'}`, go: () => go('explorer', { ward: w.id }) })),
+        ...r.beds.map((b) => ({ label: b.bed_code, sub: `Bed · ${b.ward_name}`, status: b.status, go: () => go('allocations', { ward: b.ward_id, bed: b.id }) })),
+        ...r.wards.map((w) => ({ label: w.name, sub: `Ward · prefix ${w.bed_code_prefix}${w.is_active ? '' : ' · inactive'}`, go: () => go('allocations', { ward: w.id }) })),
         ...r.equipment.map((e) => ({ label: e.equipment_code, sub: `Equipment · ${e.equipment_type}`, status: e.status, go: () => go('equipment', { item: e.id }) })),
         ...r.patients.map((p) => ({ label: `${p.patient_code} · ${p.display_name}`, sub: 'Patient (demo)', status: p.status, go: () => go('patients', { patient: p.id }) })),
       ];
@@ -283,7 +296,7 @@
   const actions = {
     'modal-close': () => closeModal(),
     go: (el) => go(el.dataset.route, el.dataset.params ? JSON.parse(el.dataset.params) : {}),
-    'open-bed': (el) => go('explorer', { ward: el.dataset.ward, bed: el.dataset.bed }),
+    'open-bed': (el) => go('allocations', { ward: el.dataset.ward, bed: el.dataset.bed }),
     'bed-status': (el) => {
       const r = attempt(() => api.updateBedStatus(Number(el.dataset.bed), { status: el.dataset.status }));
       if (r) toast(`${r.bed_code} is now ${STATUS_LABEL[r.status].toLowerCase()}.`);
@@ -523,7 +536,7 @@
     const w = attempt(() => api.getWard(id));
     if (!w) return;
     if (w.is_active) {
-      const ok = await confirmDialog({ title: `Deactivate ${w.name}?`, message: 'Inactive wards are hidden from the explorer, totals and recommendations. Their beds are kept.', confirmLabel: 'Deactivate', danger: true });
+      const ok = await confirmDialog({ title: `Deactivate ${w.name}?`, message: 'Inactive wards are hidden from Bed Allocations, totals and recommendations. Their beds are kept.', confirmLabel: 'Deactivate', danger: true });
       if (!ok) return;
     }
     const r = attempt(() => api.updateWard(id, { is_active: !w.is_active }));
@@ -552,7 +565,7 @@
       const inUse = e.status === 'IN_USE';
       body = `<form id="eq-form" class="form">
         <p><strong>${esc(e.equipment_code)}</strong> · ${esc(e.equipment_type)} · ${chip(e.status)}</p>
-        ${inUse ? `<p class="note">${icon('info')}In use at bed <a href="#/explorer?ward=${e.bed_ward_id}&bed=${e.assigned_bed_id}">${esc(e.bed_code)}</a>. It returns to Available when that patient is released.</p>` : ''}
+        ${inUse ? `<p class="note">${icon('info')}In use at bed <a href="#/allocations?ward=${e.bed_ward_id}&bed=${e.assigned_bed_id}">${esc(e.bed_code)}</a>. It returns to Available when that patient is released.</p>` : ''}
         <div class="row2">
           <label>Status<select name="status" ${inUse ? 'disabled' : ''}>${inUse ? options(['IN_USE'], 'IN_USE', STATUS_LABEL) : options(['AVAILABLE', 'RESERVED', 'MAINTENANCE'], e.status, STATUS_LABEL)}</select></label>
           <label>Location<select name="ward_id" ${inUse ? 'disabled' : ''}>${wardOpts}</select></label>
@@ -604,13 +617,13 @@
       off += len;
       return seg;
     }).join('');
-    return `<svg viewBox="0 0 140 140" class="donut" role="img" aria-label="Bed status breakdown"><g transform="rotate(-90 70 70)"><circle r="${r}" cx="70" cy="70" fill="none" stroke="#edf2f9" stroke-width="18"/>${segs}</g>
+    return `<svg viewBox="0 0 140 140" class="donut" role="img" aria-label="Bed status breakdown"><g transform="rotate(-90 70 70)"><circle r="${r}" cx="70" cy="70" fill="none" stroke="rgba(238, 243, 246, .08)" stroke-width="18"/>${segs}</g>
       <text x="70" y="68" text-anchor="middle" class="d-num">${total}</text><text x="70" y="88" text-anchor="middle" class="d-lbl">Total beds</text></svg>`;
   }
   const activityList = (items) => (items.length ? `<ul class="activity">${items.map((a) => `<li><span class="act-dot a-${esc(a.action)}" aria-hidden="true"></span><span class="act-msg">${esc(a.message)}</span>${timeTag(a.created_at)}</li>`).join('')}</ul>` : '<div class="empty">No activity yet.</div>');
   const alertIcon = (sev) => icon(sev === 'info' ? 'info' : 'alert', `sev-${sev}`);
   function alertLink(a) {
-    if (a.ward_id) return `<button class="link" data-act="go" data-route="explorer" data-params='${JSON.stringify({ ward: a.ward_id })}'>Open ward</button>`;
+    if (a.ward_id) return `<button class="link" data-act="go" data-route="allocations" data-params='${JSON.stringify({ ward: a.ward_id })}'>Open ward</button>`;
     if (a.patient_id) return `<button class="link" data-act="go" data-route="patients" data-params='${JSON.stringify({ patient: a.patient_id })}'>Review patient</button>`;
     if (a.equipment_type) return `<button class="link" data-act="go" data-route="equipment" data-params='${JSON.stringify({ type: a.equipment_type })}'>View equipment</button>`;
     if (a.kind === 'MAINTENANCE') return `<button class="link" data-act="go" data-route="beds" data-params='${JSON.stringify({ status: 'MAINTENANCE' })}'>View beds</button>`;
@@ -621,44 +634,7 @@
   // ------------------------------------------------------------------ pages
   const PAGES = {};
 
-  // ---------------- Dashboard
-  PAGES.dashboard = {
-    mount(main) {
-      main.innerHTML = `<div class="page">
-        <div class="page-head"><div><h1>Dashboard</h1><p class="muted">Live totals from stored records · fictional demo data</p></div>
-          <div class="head-actions"><button class="btn" data-act="go" data-route="explorer">${icon('cube')}Open 3D Explorer</button><button class="btn primary" data-act="register-patient">${icon('plus')}Register patient</button></div></div>
-        <section class="stats" id="d-stats" aria-label="Bed and equipment totals"></section>
-        <div class="grid-dash">
-          <section class="card" id="d-overview"></section>
-          <section class="card" id="d-wards"></section>
-          <section class="card" id="d-activity"></section>
-          <section class="card" id="d-quick"></section>
-          <section class="card" id="d-alerts"></section>
-        </div></div>`;
-    },
-    update() {
-      const s = api.summary();
-      const b = s.beds;
-      const dev = s.equipment.devices;
-      $('#d-stats').innerHTML = statCard('Total beds', b.total, null, `${s.wards.length} active wards`) +
-        MT.BED_STATUSES.map((st) => statCard(STATUS_LABEL[st], b[st], st, `${pct(b[st], b.total)}% of beds`)).join('') +
-        `<div class="stat equip"><span class="stat-label">${icon('monitor')}Devices</span><strong>${dev.AVAILABLE}<small> available</small></strong><small>${dev.IN_USE} in use · ${dev.MAINTENANCE} maintenance · ${dev.RESERVED} reserved</small></div>` +
-        `<div class="stat"><span class="stat-label">${icon('user')}Waiting patients</span><strong>${s.patients.WAITING}</strong><small>${s.patients.ALLOCATED} arriving · ${s.patients.ADMITTED} admitted</small></div>`;
-      $('#d-overview').innerHTML = `<h2>Bed overview</h2><div class="overview">${donut(b, b.total)}<ul class="legend">${MT.BED_STATUSES.map((st) => `<li><button class="link" data-act="go" data-route="beds" data-params='${JSON.stringify({ status: st })}'><i class="sw st-${st}"></i>${STATUS_LABEL[st]}</button><strong>${b[st]}</strong></li>`).join('')}</ul></div>`;
-      $('#d-wards').innerHTML = `<h2>Wards</h2>${s.wards.length ? `<ul class="ward-sum">${s.wards.map((w) => `<li><button class="ward-row" data-act="go" data-route="explorer" data-params='${JSON.stringify({ ward: w.id })}'>
-        <span class="wr-name"><strong>${esc(w.name)}</strong><small>${w.bed_count} beds · ${w.counts.AVAILABLE} available · ${w.occupancy_pct}% occupied</small></span>${w.bed_count ? stackBar(w.counts, w.bed_count) : '<span class="muted small">No beds</span>'}${icon('chev')}</button></li>`).join('')}</ul>` : '<div class="empty">No active wards. <a href="#/setup">Add a ward</a>.</div>'}`;
-      $('#d-activity').innerHTML = `<div class="card-head"><h2>Recent activity</h2><a class="link" href="#/alerts">View all</a></div>${activityList(api.activity({ limit: 6 }))}`;
-      $('#d-quick').innerHTML = `<h2>Quick actions</h2><div class="quick">
-        <button class="qa" data-act="register-patient">${icon('user')}Register patient</button>
-        <button class="qa" data-act="go" data-route="patients" data-params='{"status":"WAITING"}'>${icon('bed')}Find suitable bed</button>
-        <button class="qa" data-act="go" data-route="beds">${icon('list')}View all beds</button>
-        <button class="qa" data-act="go" data-route="alerts">${icon('bell')}Check alerts</button></div>`;
-      const alerts = api.alerts();
-      $('#d-alerts').innerHTML = `<div class="card-head"><h2>Current alerts</h2><a class="link" href="#/alerts">View all (${alerts.length})</a></div>${alertList(alerts.slice(0, 4))}`;
-    },
-  };
-
-  // ---------------- 3D Explorer
+  // ---------------- Bed Allocations (3D bed inventory)
   let stage = null;
   let stagePromise = null;
   let stageFailed = false;
@@ -670,7 +646,7 @@
     : `<span class="${cls || 'thumb'} thumb-fallback st-${status}" aria-hidden="true">${icon('bed')}</span>`);
   const shortCode = (code) => code.split('-').pop();
 
-  PAGES.explorer = {
+  PAGES.allocations = {
     mount(main, params) {
       this.applyParams(params);
       main.innerHTML = `<div class="page explorer">
@@ -695,6 +671,7 @@
                   <button data-act="view" data-view="3d" aria-pressed="${S.view === '3d'}">${icon('cube')}3D</button>
                   <button data-act="view" data-view="list" aria-pressed="${S.view === 'list'}">${icon('list')}List</button>
                 </div>
+                <a class="btn sm tools-link" href="#/beds" title="Table of every bed across all wards">${icon('layers')}All wards table</a>
               </div>
               <div class="place-banner" id="ex-place" hidden></div>
               <div class="stage-msg" id="stage-msg" hidden></div>
@@ -777,7 +754,7 @@
     selectWard(id) {
       if (id === S.wardId) return;
       S.wardId = id; S.bedId = null; S.group = 0;
-      replaceHash('explorer', { for: S.placing, ward: id });
+      replaceHash('allocations', { for: S.placing, ward: id });
       refresh();
     },
     selectBed(id, focus) {
@@ -785,7 +762,7 @@
       if (!bed) return;
       S.bedId = id; S.panelTab = 'details';
       S.group = Math.floor(bed.index_in_ward / api.getSettings().group_size);
-      replaceHash('explorer', { for: S.placing, ward: S.wardId, bed: id });
+      replaceHash('allocations', { for: S.placing, ward: S.wardId, bed: id });
       this.pendingFocus = focus;
       this.update();
     },
@@ -793,7 +770,7 @@
       S.group = i;
       if (S.bedId != null) {
         const idx = this.beds.findIndex((b) => b.id === S.bedId);
-        if (Math.floor(idx / this.groupSize) !== i) { S.bedId = null; replaceHash('explorer', { for: S.placing, ward: S.wardId }); }
+        if (Math.floor(idx / this.groupSize) !== i) { S.bedId = null; replaceHash('allocations', { for: S.placing, ward: S.wardId }); }
       }
       if (stage) stage.setActiveGroup(i, { focus });
       this.update();
@@ -807,11 +784,11 @@
       const pick = exact || (hits.length === 1 ? hits[0] : null);
       if (pick) { this.selectBed(pick.id, true); toast(`Selected ${pick.bed_code}.`, 'info'); return; }
       const elsewhere = api.search(q).beds.find((b) => b.bed_code.toLowerCase() === term);
-      if (elsewhere) { go('explorer', { ward: elsewhere.ward_id, bed: elsewhere.id }); return; }
+      if (elsewhere) { go('allocations', { ward: elsewhere.ward_id, bed: elsewhere.id }); return; }
       toast(hits.length ? `${hits.length} beds match “${q}” — keep typing to narrow it down.` : `No bed with ID “${q}”.`, hits.length ? 'info' : 'err');
     },
     actions: {
-      view(el) { S.view = el.dataset.view; PAGES.explorer.syncView(); PAGES.explorer.update(); },
+      view(el) { S.view = el.dataset.view; PAGES.allocations.syncView(); PAGES.allocations.update(); },
       cam(el) {
         if (!stage) return;
         const c = el.dataset.cam;
@@ -821,15 +798,15 @@
         else if (c === 'reset') stage.resetView();
         else if (c === 'auto') { stage.setAutoRotate(!stage.autoRotate); el.setAttribute('aria-pressed', String(stage.autoRotate)); }
       },
-      'ward-pick': (el) => PAGES.explorer.selectWard(Number(el.dataset.ward)),
-      'chip-filter': (el) => { S.exFilters.status = S.exFilters.status === el.dataset.status ? '' : el.dataset.status; $('#ex-status').value = S.exFilters.status; PAGES.explorer.update(); },
-      'pick-bed': (el) => PAGES.explorer.selectBed(Number(el.dataset.bed), true),
-      'pick-group': (el) => PAGES.explorer.selectGroup(Number(el.dataset.group), true),
-      'close-section': () => { S.group = null; S.bedId = null; replaceHash('explorer', { for: S.placing, ward: S.wardId }); if (stage) { stage.setActiveGroup(null); stage.resetView(); } PAGES.explorer.update(); },
-      'close-bed': () => { S.bedId = null; replaceHash('explorer', { for: S.placing, ward: S.wardId }); PAGES.explorer.update(); },
-      'panel-tab': (el) => { S.panelTab = el.dataset.tab; PAGES.explorer.renderPanel(); },
-      'clear-filters': () => { S.exFilters = { status: '', bed_type: '', search: '' }; $('#ex-status').value = ''; $('#ex-type').value = ''; $('#ex-search').value = ''; PAGES.explorer.update(); },
-      'place-cancel': () => { S.placing = null; replaceHash('explorer', { for: null, ward: S.wardId, bed: S.bedId }); PAGES.explorer.update(); },
+      'ward-pick': (el) => PAGES.allocations.selectWard(Number(el.dataset.ward)),
+      'chip-filter': (el) => { S.exFilters.status = S.exFilters.status === el.dataset.status ? '' : el.dataset.status; $('#ex-status').value = S.exFilters.status; PAGES.allocations.update(); },
+      'pick-bed': (el) => PAGES.allocations.selectBed(Number(el.dataset.bed), true),
+      'pick-group': (el) => PAGES.allocations.selectGroup(Number(el.dataset.group), true),
+      'close-section': () => { S.group = null; S.bedId = null; replaceHash('allocations', { for: S.placing, ward: S.wardId }); if (stage) { stage.setActiveGroup(null); stage.resetView(); } PAGES.allocations.update(); },
+      'close-bed': () => { S.bedId = null; replaceHash('allocations', { for: S.placing, ward: S.wardId }); PAGES.allocations.update(); },
+      'panel-tab': (el) => { S.panelTab = el.dataset.tab; PAGES.allocations.renderPanel(); },
+      'clear-filters': () => { S.exFilters = { status: '', bed_type: '', search: '' }; $('#ex-status').value = ''; $('#ex-type').value = ''; $('#ex-search').value = ''; PAGES.allocations.update(); },
+      'place-cancel': () => { S.placing = null; replaceHash('allocations', { for: null, ward: S.wardId, bed: S.bedId }); PAGES.allocations.update(); },
       'place-back': () => go('patients', { patient: S.placing }),
       'place-confirm': async (el) => {
         const pid = S.placing;
@@ -1125,7 +1102,7 @@
         const r = attempt(() => api.stopMatching(Number(el.dataset.patient)));
         if (r) toast(`${r.patient_code} moved back to Waiting.`, 'info');
       },
-      'place-3d': (el) => go('explorer', { ward: el.dataset.ward, bed: el.dataset.bed || '', for: el.dataset.patient }),
+      'place-3d': (el) => go('allocations', { ward: el.dataset.ward, bed: el.dataset.bed || '', for: el.dataset.patient }),
       'choose-bed': async (el) => {
         const p = api.getPatient(Number(el.dataset.patient));
         const rec = api.recommendations(p.id, { limit: 500 }).recommendations.find((x) => x.bed_id === Number(el.dataset.bed));
@@ -1266,7 +1243,7 @@
       }
       return `${head}<ol class="rec-cards">${r.recommendations.map((x, i) => `<li class="rec-card" style="--i:${i}">
           <div class="rc-top"><span class="rank">#${x.rank}</span><div class="rc-id"><strong>${esc(x.bed_code)}</strong><small>${esc(x.ward_name)} · ${esc(x.bed_type)}</small></div>
-            <button class="btn sm ghost" data-act="place-3d" data-patient="${p.id}" data-ward="${x.ward_id}" data-bed="${x.bed_id}" title="Show ${esc(x.bed_code)} in the 3D explorer">${icon('cube')}3D</button>
+            <button class="btn sm ghost" data-act="place-3d" data-patient="${p.id}" data-ward="${x.ward_id}" data-bed="${x.bed_id}" title="Show ${esc(x.bed_code)} in Bed Allocations">${icon('cube')}3D</button>
             <button class="btn sm primary" data-act="choose-bed" data-patient="${p.id}" data-bed="${x.bed_id}">Allocate</button></div>
           <ul class="rc-why">${x.matches.map((m) => `<li>${icon('check')}${esc(m)}</li>`).join('')}</ul></li>`).join('')}</ol>
         ${r.eligible_count > r.recommendations.length ? `<p class="muted small">Top ${r.recommendations.length} of ${r.eligible_count}. Use “See all in 3D” to browse every suitable bed.</p>` : ''}${rejected}${actions}`;
@@ -1305,7 +1282,8 @@
       const wards = api.listWards({ include_inactive: false });
       const f = S.bedsFilters;
       main.innerHTML = `<div class="page">
-        <div class="page-head"><div><h1>Beds &amp; Resources</h1><p class="muted">List view of every bed — a fast, non-3D alternative to the explorer</p></div></div>
+        <div class="page-head"><div><h1>All beds</h1><p class="muted">Every bed across all wards in one table — a fast, non-3D alternative to Bed Allocations</p></div>
+          <div class="head-actions"><a class="btn" href="#/allocations">${icon('bed')}Back to Bed Allocations</a></div></div>
         <section class="card">
           <div class="filters">
             <label class="search-field sm grow"><span class="sr-only">Search bed ID</span>${icon('search')}<input id="b-search" type="search" placeholder="Search bed ID…" value="${esc(f.search)}"></label>
@@ -1376,7 +1354,7 @@
   PAGES.alerts = {
     mount(main) {
       main.innerHTML = `<div class="page">
-        <div class="page-head"><div><h1>Alerts &amp; activity</h1><p class="muted">Alerts are computed from stored data using the thresholds in <a href="#/setup">Settings</a></p></div></div>
+        <div class="page-head"><div><h1>Alerts &amp; activity</h1><p class="muted">Alerts are computed from stored data using the thresholds in <a href="#/settings">Settings</a></p></div></div>
         <div class="split even">
           <section class="card" id="a-alerts"></section>
           <section class="card"><div class="card-head"><h2>Activity history</h2>
@@ -1449,13 +1427,11 @@
   PAGES.setup = {
     mount(main) {
       main.innerHTML = `<div class="page">
-        <div class="page-head"><div><h1>Setup &amp; Settings</h1><p class="muted">Configure wards and bed counts. The explorer lays beds out automatically — no floor plans or physical positions.</p></div>
+        <div class="page-head"><div><h1>Setup</h1><p class="muted">Configure wards and bed counts. Bed Allocations lays beds out automatically — no floor plans or physical positions.</p></div>
           <div class="head-actions"><button class="btn primary" data-act="add-ward">${icon('plus')}Add ward</button></div></div>
         <section class="card" id="s-wards"></section>
-        <div class="grid-2">
-          <section class="card" id="s-settings"></section>
-          <section class="card" id="s-demo"></section>
-        </div></div>`;
+        <section class="card" id="s-demo"></section>
+        <p class="page-note">${icon('gear')}Alert thresholds, device minimums and bed-type compatibility rules are in <a href="#/settings">Settings</a>.</p></div>`;
     },
     update() {
       const wards = api.listWards();
@@ -1465,16 +1441,28 @@
           <td>${w.is_active ? '<span class="chip st-AVAILABLE"><i></i>Active</span>' : '<span class="chip st-CLEANING"><i></i>Inactive</span>'}</td>
           <td class="actions"><button class="btn sm ghost" data-act="edit-ward" data-ward="${w.id}">${icon('edit')}Edit</button><button class="btn sm ghost" data-act="resize-ward" data-ward="${w.id}">${icon('bed')}Set bed count</button>
           <button class="btn sm ghost" data-act="toggle-ward" data-ward="${w.id}">${w.is_active ? 'Deactivate' : 'Activate'}</button></td></tr>`).join('')}</tbody></table></div>` : '<div class="empty">No wards yet. Add one to generate beds.</div>'}`;
-      if (!$('#settings-form')) this.renderSettings();
       $('#s-demo').innerHTML = `<h2>${icon('db')} Demo data</h2>
         <p class="muted">All records are fictional and stored in this browser's local storage. They persist across reloads until reset.</p>
         <div class="btn-row wrap"><button class="btn" data-act="seed-demo">${icon('refresh')}Add missing demo data</button><button class="btn danger" data-act="reset-demo">Reset demo data</button></div>
         <p class="muted small">“Add missing demo data” is repeatable — it never duplicates wards, beds, patients or equipment.</p>
         <div class="integrity">${(() => { const p = api.integrityProblems(); return p.length ? `<span class="err">${icon('alert')} ${p.length} consistency problem(s): ${esc(p[0])}</span>` : `${icon('check')} Data consistency check passed (allocations, bed states, patient states, device assignments).`; })()}</div>`;
     },
+  };
+
+  // ---------------- Settings (thresholds and allocation rules; same settings record as before)
+  PAGES.settings = {
+    mount(main) {
+      main.innerHTML = `<div class="page settings-page">
+        <div class="page-head"><div><h1>Settings</h1><p class="muted">Alert thresholds and allocation rules. Changes apply to alerts and bed recommendations immediately.</p></div></div>
+        <section class="card" id="s-settings"></section>
+        <p class="page-note">${icon('layers')}Wards, bed counts and demo data are managed in <a href="#/setup">Setup</a>.</p></div>`;
+      this.renderSettings();
+    },
+    // The form is rendered once on mount so typing is never interrupted by background refreshes.
+    update() {},
     renderSettings() {
       const s = api.getSettings();
-      $('#s-settings').innerHTML = `<h2>${icon('settings')} Thresholds &amp; allocation rules</h2>
+      $('#s-settings').innerHTML = `<h2>${icon('gear')} Thresholds &amp; allocation rules</h2>
         <form id="settings-form" class="form">
           <div class="row2">
             <label>Low-availability alert at ≤ (%)<input name="low_available_pct" type="number" min="0" max="100" value="${s.low_available_pct}"></label>
@@ -1482,12 +1470,12 @@
           </div>
           <fieldset><legend>Minimum available devices (shortage alert below)</legend><div class="row3">${MT.DEVICE_TYPES.map((t) => `<label>${esc(t)}<input name="min_${esc(t)}" type="number" min="0" max="1000" value="${s.equipment_min_available[t]}"></label>`).join('')}</div></fieldset>
           <div class="row2">
-            <label>Beds per visual group in explorer<input name="group_size" type="number" min="4" max="30" value="${s.group_size}"></label>
+            <label>Beds per visual section in Bed Allocations<input name="group_size" type="number" min="4" max="30" value="${s.group_size}"></label>
             <label class="check inline"><input type="checkbox" name="release_to_cleaning" value="1" ${s.release_to_cleaning ? 'checked' : ''}><span>Released beds go to <strong>Cleaning</strong> (otherwise straight to Available)</span></label>
           </div>
           <fieldset><legend>Bed-type compatibility — which bed types may be recommended for each requested type</legend>
-            <table class="table compat"><thead><tr><th>Requested</th>${MT.BED_TYPES.map((t) => `<th>${esc(t)}</th>`).join('')}</tr></thead><tbody>
-            ${MT.BED_TYPES.map((req) => `<tr><th scope="row">${esc(req)}</th>${MT.BED_TYPES.map((t) => `<td><input type="checkbox" name="compat_${esc(req)}" value="${esc(t)}" ${(s.bed_type_compat[req] || [req]).includes(t) ? 'checked' : ''} ${t === req ? 'disabled' : ''} aria-label="Allow ${esc(t)} bed for ${esc(req)} request"></td>`).join('')}</tr>`).join('')}</tbody></table></fieldset>
+            <div class="table-wrap"><table class="table compat"><thead><tr><th>Requested</th>${MT.BED_TYPES.map((t) => `<th>${esc(t)}</th>`).join('')}</tr></thead><tbody>
+            ${MT.BED_TYPES.map((req) => `<tr><th scope="row">${esc(req)}</th>${MT.BED_TYPES.map((t) => `<td><input type="checkbox" name="compat_${esc(req)}" value="${esc(t)}" ${(s.bed_type_compat[req] || [req]).includes(t) ? 'checked' : ''} ${t === req ? 'disabled' : ''} aria-label="Allow ${esc(t)} bed for ${esc(req)} request"></td>`).join('')}</tr>`).join('')}</tbody></table></div></fieldset>
           <div class="btn-row"><button class="btn primary" type="submit">Save settings</button></div>
         </form>`;
       $('#settings-form').addEventListener('submit', (e) => {

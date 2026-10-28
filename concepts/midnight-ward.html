@@ -1,0 +1,579 @@
+<!doctype html>
+<html lang="en" data-mode="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MediTwin · Midnight Ward concept</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* Every colour on this page comes from the active theme's 10-colour palette (set by JS),
+   used solid or as a transparency of itself. Components only read the semantic tokens below. */
+:root {
+  --r-xl: 24px; --r-lg: 18px; --r-md: 12px;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body {
+  font: 14px/1.45 Manrope, system-ui, sans-serif; color: var(--ink); -webkit-font-smoothing: antialiased; overflow: hidden;
+  background:
+    radial-gradient(900px 640px at 18% 8%, rgba(var(--accent-rgb), var(--glow-a1)), transparent 62%),
+    radial-gradient(760px 560px at 88% 96%, rgba(var(--mint-rgb), var(--glow-a2)), transparent 60%),
+    var(--bg);
+  transition: background-color .35s;
+}
+body::before {
+  content: ""; position: fixed; inset: 0; pointer-events: none;
+  background-image: linear-gradient(rgba(var(--line-rgb), var(--grid-a)) 1px, transparent 1px), linear-gradient(90deg, rgba(var(--line-rgb), var(--grid-a)) 1px, transparent 1px);
+  background-size: 44px 44px; mask-image: radial-gradient(ellipse at 50% 40%, var(--bg) 30%, transparent 80%); -webkit-mask-image: radial-gradient(ellipse at 50% 40%, var(--bg) 30%, transparent 80%);
+}
+button { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 10px; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+.ico { width: 18px; height: 18px; flex: none; }
+
+.glass {
+  background: linear-gradient(160deg, rgba(var(--glass-rgb), var(--glass-a1)), rgba(var(--glass-rgb), var(--glass-a2)));
+  border: 1px solid rgba(var(--line-rgb), var(--line-a)); border-radius: var(--r-xl);
+  box-shadow: 0 24px 60px rgba(var(--shadow-rgb), var(--shadow-a)), inset 0 1px 0 rgba(var(--glass-rgb), var(--edge-a));
+  backdrop-filter: blur(22px) saturate(140%); -webkit-backdrop-filter: blur(22px) saturate(140%);
+}
+.well { background: rgba(var(--well-rgb), var(--well-a)); border: 1px solid rgba(var(--line-rgb), var(--line-a)); }
+
+/* ===== shell ===== */
+.shell { display: grid; grid-template-columns: 88px minmax(0, 1fr) 370px; grid-template-rows: 70px minmax(0, 1fr) 156px; gap: 16px; height: 100vh; padding: 16px; position: relative; }
+.rail { grid-row: 1 / -1; display: flex; flex-direction: column; align-items: center; padding: 16px 0; gap: 6px; }
+.cmd { grid-column: 2 / 4; display: flex; align-items: center; gap: 12px; padding: 0 14px 0 22px; border-radius: 20px; }
+.stage { grid-column: 2; grid-row: 2; position: relative; overflow: hidden; }
+.inspector { grid-column: 3; grid-row: 2 / 4; display: flex; flex-direction: column; overflow: hidden; }
+.dock { grid-column: 2; grid-row: 3; display: grid; grid-template-columns: 1.1fr .8fr .8fr 1.6fr; gap: 12px; }
+
+/* ===== rail ===== */
+.logo { width: 46px; height: 46px; border-radius: 15px; display: grid; place-items: center; margin-bottom: 14px; background: rgba(var(--accent-rgb), .14); border: 1px solid rgba(var(--accent-rgb), .35); }
+.logo svg { width: 24px; height: 24px; }
+.nav { display: flex; flex-direction: column; gap: 4px; width: 100%; align-items: center; }
+.nav button { width: 68px; display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 9px 4px 8px; border: 0; background: none; border-radius: 14px; cursor: pointer; color: var(--muted); font-size: 10.5px; font-weight: 700; position: relative; transition: color .2s, background .2s; }
+.nav button .ico { width: 21px; height: 21px; }
+.nav button:hover { color: var(--ink); background: rgba(var(--glass-rgb), var(--glass-a1)); }
+.nav button.on { color: var(--ink); background: rgba(var(--accent-rgb), .14); box-shadow: inset 0 0 0 1px rgba(var(--accent-rgb), .3); }
+.nav button.on::before { content: ""; position: absolute; left: -10px; top: 14px; bottom: 14px; width: 3px; border-radius: 3px; background: var(--accent); box-shadow: 0 0 12px rgba(var(--accent-rgb), .8); }
+.nav .badge { position: absolute; top: 4px; right: 12px; min-width: 16px; height: 16px; border-radius: 8px; background: var(--coral); color: var(--dark); font-size: 10px; font-weight: 800; display: grid; place-items: center; padding: 0 4px; }
+.rail-foot { margin-top: auto; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.live { display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 10px; color: var(--muted); font-weight: 700; }
+.live i { width: 8px; height: 8px; border-radius: 50%; background: var(--mint); box-shadow: 0 0 0 4px rgba(var(--mint-rgb), .18); animation: beat 2.4s ease-in-out infinite; }
+@keyframes beat { 50% { box-shadow: 0 0 0 8px rgba(var(--mint-rgb), 0); } }
+.avatar { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; font-weight: 800; font-size: 13px; color: var(--on-primary); background: var(--primary); }
+
+/* ===== command bar ===== */
+.cmd h1 { margin: 0; font-size: 17px; font-weight: 800; letter-spacing: -.01em; white-space: nowrap; }
+.cmd .crumb { font-size: 11.5px; color: var(--muted); font-weight: 600; white-space: nowrap; }
+.wards { display: flex; gap: 4px; padding: 4px; border-radius: 14px; margin-left: 6px; overflow-x: auto; scrollbar-width: none; }
+.wards button { border: 0; background: none; border-radius: 10px; padding: 7px 11px; cursor: pointer; color: var(--muted); font-weight: 700; font-size: 12.5px; white-space: nowrap; display: flex; align-items: center; gap: 7px; transition: background .2s, color .2s; }
+.wards button span { font-size: 11px; font-weight: 700; color: var(--muted); background: rgba(var(--line-rgb), .08); border-radius: 7px; padding: 1px 6px; }
+.wards button:hover { color: var(--ink); }
+.wards button.on { background: var(--primary); color: var(--on-primary); }
+.wards button.on span { background: rgba(var(--glass-rgb), .14); color: var(--on-primary); }
+.mode { display: flex; padding: 3px; border-radius: 12px; margin-left: auto; }
+.mode button { border: 0; background: none; border-radius: 9px; padding: 6px 10px; cursor: pointer; color: var(--muted); font-weight: 800; font-size: 12px; display: flex; align-items: center; gap: 6px; }
+.mode button .ico { width: 15px; height: 15px; }
+.mode button.on { background: var(--primary); color: var(--on-primary); }
+.bg-pick { display: flex; align-items: center; gap: 6px; padding: 5px 10px 5px 12px; border-radius: 14px; }
+.bg-pick > span { font-size: 11px; font-weight: 800; color: var(--muted); letter-spacing: .06em; margin-right: 2px; }
+.bg-pick button { width: 24px; height: 24px; border-radius: 50%; cursor: pointer; border: 2px solid rgba(var(--line-rgb), .2); padding: 0; transition: transform .15s; }
+.bg-pick button:hover { transform: scale(1.12); }
+.bg-pick button.on { border-color: var(--ink); box-shadow: 0 0 0 3px rgba(var(--accent-rgb), .35); }
+.bg-pick .name { font-size: 12px; font-weight: 800; margin-left: 4px; white-space: nowrap; }
+.search { display: flex; align-items: center; gap: 10px; height: 42px; flex: 0 1 210px; min-width: 0; padding: 0 12px 0 14px; border-radius: 13px; color: var(--muted); }
+.search input { flex: 1; min-width: 0; border: 0; background: none; outline: 0; color: var(--ink); font: inherit; }
+.search input::placeholder { color: var(--muted); }
+.icon-btn { width: 42px; height: 42px; border-radius: 13px; display: grid; place-items: center; cursor: pointer; color: var(--ink); position: relative; flex: none; transition: background .2s; }
+.icon-btn:hover { background: rgba(var(--glass-rgb), var(--glass-a1)); }
+.icon-btn .dot { position: absolute; top: 9px; right: 10px; width: 8px; height: 8px; border-radius: 50%; background: var(--coral); }
+@media (max-width: 1640px) { .cmd .crumb { display: none; } }
+
+/* ===== stage ===== */
+.stage-head { position: absolute; top: 18px; left: 22px; right: 22px; display: flex; align-items: flex-start; gap: 16px; z-index: 3; pointer-events: none; flex-wrap: wrap; }
+.stage-head > * { pointer-events: auto; }
+.ward-title h2 { margin: 0; font-size: 30px; font-weight: 800; letter-spacing: -.02em; line-height: 1.1; }
+.ward-title p { margin: 4px 0 0; color: var(--muted); font-size: 13px; font-weight: 600; }
+.chips { display: flex; gap: 6px; flex-wrap: wrap; margin-left: auto; }
+.chip { display: flex; flex-direction: column; gap: 1px; padding: 8px 13px 7px; border-radius: 13px; cursor: pointer; text-align: left; min-width: 92px; transition: border-color .2s, transform .2s; }
+.chip small { display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 700; color: var(--muted); }
+.chip small i { width: 8px; height: 8px; border-radius: 50%; background: var(--sc); }
+.chip strong { font-size: 20px; font-weight: 800; color: var(--ink); }
+.chip:hover { transform: translateY(-1px); }
+.chip.on { border-color: var(--sc); box-shadow: inset 0 0 0 1px var(--sc); }
+.canvas { position: absolute; inset: 0; }
+.canvas svg { width: 100%; height: 100%; display: block; cursor: grab; touch-action: none; }
+.canvas svg.drag { cursor: grabbing; }
+.bed { cursor: pointer; transition: opacity .25s, transform .25s cubic-bezier(.3, .7, .3, 1.3); }
+.bed:hover { filter: brightness(1.12); }
+.bed.dim { opacity: .14; }
+.bed.sel { transform: translateY(-8px); }
+.bed .ring { opacity: 0; transition: opacity .2s; }
+.bed.sel .ring { opacity: 1; animation: ring 2s ease-in-out infinite; }
+@keyframes ring { 50% { stroke-opacity: .35; } }
+.sec-label { cursor: pointer; }
+.tools { position: absolute; left: 18px; bottom: 18px; display: flex; gap: 10px; z-index: 3; align-items: center; }
+.tool-group { display: flex; gap: 2px; padding: 5px; border-radius: 15px; }
+.tool-group button { width: 38px; height: 38px; border-radius: 11px; border: 0; background: none; color: var(--ink); cursor: pointer; display: grid; place-items: center; transition: background .2s; }
+.tool-group button:hover { background: rgba(var(--glass-rgb), var(--glass-a1)); }
+.tool-group button.on { background: var(--primary); color: var(--on-primary); }
+.compass { width: 50px; height: 50px; border-radius: 50%; display: grid; place-items: center; position: relative; }
+.compass b { position: absolute; top: 5px; font-size: 10px; font-weight: 800; color: var(--accent); }
+.compass svg { width: 22px; height: 22px; transition: transform .45s cubic-bezier(.3, .7, .3, 1); }
+.note { position: absolute; right: 20px; bottom: 18px; font-size: 11px; color: var(--muted); font-weight: 600; z-index: 3; }
+.tip { position: absolute; z-index: 5; pointer-events: none; padding: 7px 10px; border-radius: 10px; font-size: 12px; font-weight: 700; background: var(--primary); color: var(--on-primary); white-space: nowrap; transform: translate(-50%, -120%); box-shadow: 0 8px 20px rgba(var(--shadow-rgb), .3); }
+.list { position: absolute; inset: 120px 18px 76px; overflow: auto; z-index: 2; display: none; }
+.stage.list-mode .list { display: block; }
+.stage.list-mode .canvas { opacity: .08; pointer-events: none; }
+.list h4 { margin: 14px 4px 8px; font-size: 12px; color: var(--muted); font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
+.list .tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 8px; }
+.tile { border-radius: 13px; padding: 10px; cursor: pointer; display: flex; flex-direction: column; gap: 6px; text-align: left; }
+.tile.sel { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+.tile b { font-size: 13px; }
+
+/* ===== inspector ===== */
+.insp-head { padding: 20px 22px 0; display: flex; align-items: center; justify-content: space-between; }
+.insp-head small { color: var(--muted); font-weight: 800; font-size: 11.5px; letter-spacing: .06em; text-transform: uppercase; }
+.hero { margin: 14px 18px 0; border-radius: var(--r-lg); position: relative; overflow: hidden; height: 158px; }
+.hero::before { content: ""; position: absolute; inset: auto -20% -60% -20%; height: 120%; background: radial-gradient(closest-side, var(--glow), transparent); }
+.hero svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.hero-id { position: absolute; left: 16px; top: 14px; z-index: 1; }
+.hero-id h3 { margin: 0; font-size: 26px; font-weight: 800; letter-spacing: -.02em; }
+.pill { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px 3px 8px; border-radius: 999px; font-size: 12px; font-weight: 800; margin-top: 6px; background: rgba(var(--sc-rgb), var(--pill-a)); color: var(--pill-text, var(--sc)); }
+.pill i { width: 7px; height: 7px; border-radius: 50%; background: var(--sc); }
+.tabs { display: flex; gap: 4px; margin: 14px 18px 0; padding: 4px; border-radius: 13px; }
+.tabs button { flex: 1; border: 0; background: none; padding: 7px; border-radius: 9px; cursor: pointer; font-weight: 800; color: var(--muted); font-size: 12.5px; }
+.tabs button.on { background: rgba(var(--glass-rgb), var(--tab-a)); color: var(--ink); box-shadow: inset 0 0 0 1px rgba(var(--line-rgb), .14); }
+.insp-body { padding: 10px 22px 0; overflow: auto; flex: 1; min-height: 0; }
+.kv { display: grid; grid-template-columns: 1fr 1.25fr; margin: 0; font-size: 13px; }
+.kv dt, .kv dd { margin: 0; padding: 9px 0; border-bottom: 1px solid rgba(var(--line-rgb), var(--line-a)); }
+.kv dt { color: var(--muted); font-weight: 600; }
+.kv dd { font-weight: 800; }
+.sec-strip { margin-top: 14px; }
+.sec-strip h5 { margin: 0 0 8px; font-size: 11.5px; color: var(--muted); font-weight: 800; letter-spacing: .06em; text-transform: uppercase; display: flex; justify-content: space-between; }
+.mini-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+.mini { border-radius: 11px; padding: 7px 4px 6px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 11px; font-weight: 800; color: var(--ink); transition: transform .2s; }
+.mini i { width: 22px; height: 5px; border-radius: 3px; background: var(--sc); }
+.mini:hover { transform: translateY(-1px); }
+.mini.sel { border-color: var(--accent); background: rgba(var(--accent-rgb), .14); }
+.actions { padding: 14px 18px 18px; display: flex; flex-direction: column; gap: 8px; }
+.btn-primary { height: 48px; border: 0; border-radius: 14px; background: var(--primary); color: var(--on-primary); font-weight: 800; font-size: 14.5px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 9px; transition: transform .15s; box-shadow: 0 10px 30px rgba(var(--accent-rgb), .25); }
+.btn-primary:hover { transform: translateY(-1px); }
+.btn-row { display: flex; gap: 8px; }
+.btn-ghost { flex: 1; height: 38px; border-radius: 12px; cursor: pointer; font-weight: 800; font-size: 12.5px; color: var(--ink); display: flex; align-items: center; justify-content: center; gap: 6px; }
+.btn-ghost i { width: 7px; height: 7px; border-radius: 50%; background: var(--sc); }
+
+/* ===== dock ===== */
+.card { padding: 16px 18px; display: flex; flex-direction: column; min-width: 0; }
+.card h6 { margin: 0; font-size: 11.5px; color: var(--muted); font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
+.occ { flex-direction: row; align-items: center; gap: 16px; }
+.occ svg { width: 104px; height: 104px; flex: none; }
+.big { font-size: 40px; font-weight: 800; letter-spacing: -.03em; line-height: 1.05; }
+.occ .big { font-size: 34px; }
+.card p { margin: 4px 0 0; font-size: 12px; color: var(--muted); font-weight: 600; }
+.stat .big { margin-top: auto; }
+.feed { list-style: none; margin: 10px 0 0; padding: 0; display: flex; flex-direction: column; gap: 7px; overflow: hidden; }
+.feed li { display: grid; grid-template-columns: 8px 1fr auto; gap: 10px; align-items: center; font-size: 12.5px; font-weight: 700; }
+.feed li i { width: 8px; height: 8px; border-radius: 50%; background: var(--sc); }
+.feed li time { color: var(--muted); font-size: 11.5px; }
+
+/* ===== palette popover ===== */
+.pal { position: absolute; top: 96px; right: 400px; z-index: 20; width: 310px; padding: 16px; display: none; }
+.pal.open { display: block; animation: pop .25s ease; }
+@keyframes pop { from { opacity: 0; transform: translateY(-6px); } }
+.pal h6 { margin: 0 0 10px; font-size: 11.5px; color: var(--muted); letter-spacing: .06em; text-transform: uppercase; }
+.pal ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 7px; }
+.pal li { display: grid; grid-template-columns: 26px 1fr auto; gap: 10px; align-items: center; font-size: 12.5px; font-weight: 800; }
+.pal li i { width: 26px; height: 26px; border-radius: 8px; border: 1px solid rgba(var(--line-rgb), .2); }
+.pal li code { color: var(--muted); font-size: 11.5px; }
+.pal li small { display: block; color: var(--muted); font-weight: 600; font-size: 11px; }
+
+@media (max-width: 1180px) {
+  body { overflow: auto; }
+  .shell { grid-template-columns: 76px minmax(0, 1fr); grid-template-rows: auto 64vh auto auto; height: auto; }
+  .cmd { grid-column: 2; flex-wrap: wrap; padding: 12px 14px; }
+  .inspector { grid-column: 2; grid-row: 3; }
+  .dock { grid-column: 2; grid-row: 4; grid-template-columns: 1fr 1fr; }
+  .pal { right: 16px; }
+}
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+</style>
+</head>
+<body>
+<div class="shell">
+  <aside class="rail glass" aria-label="Main navigation">
+    <div class="logo" title="MediTwin"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="2" width="6" height="20" rx="2" fill="var(--accent)"/><rect x="2" y="9" width="20" height="6" rx="2" fill="var(--accent)"/></svg></div>
+    <nav class="nav" id="nav"></nav>
+    <div class="rail-foot"><div class="live"><i></i>LIVE</div><div class="avatar" title="Demo Staff">DS</div></div>
+  </aside>
+
+  <header class="cmd glass">
+    <div><h1>Bed Allocations</h1><div class="crumb">Hospital (demo) · 3D bed inventory</div></div>
+    <div class="wards well" id="wards" role="tablist" aria-label="Ward"></div>
+    <div class="mode well" role="radiogroup" aria-label="Theme">
+      <button data-mode="dark" role="radio"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>Dark</button>
+      <button data-mode="light" role="radio"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>Light</button>
+    </div>
+    <div class="bg-pick well" id="bgPick" role="radiogroup" aria-label="Background"></div>
+    <label class="search well"><span class="sr">Search beds</span><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="q" placeholder="Find bed — e.g. W1-042" autocomplete="off"></label>
+    <button class="icon-btn well" id="palBtn" aria-label="Show colour palette" title="Colour palette"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="13.5" cy="6.5" r="1.5"/><circle cx="17.5" cy="10.5" r="1.5"/><circle cx="8.5" cy="7.5" r="1.5"/><circle cx="6.5" cy="12.5" r="1.5"/><path d="M12 2a10 10 0 0 0 0 20c1.1 0 2-.9 2-2 0-.5-.2-1-.5-1.3-.3-.4-.5-.8-.5-1.3 0-1.1.9-2 2-2h2.4A5.6 5.6 0 0 0 22 10c0-4.4-4.5-8-10-8z"/></svg></button>
+    <button class="icon-btn well" aria-label="Alerts, 2 need attention"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg><span class="dot"></span></button>
+  </header>
+
+  <section class="stage glass" id="stage" aria-label="3D bed grid">
+    <div class="stage-head">
+      <div class="ward-title"><h2 id="wName">Ward 1</h2><p id="wSub"></p></div>
+      <div class="chips" id="chips" role="group" aria-label="Filter by status"></div>
+    </div>
+    <div class="canvas" id="canvas"></div>
+    <div class="list" id="list"></div>
+    <div class="tools">
+      <div class="tool-group glass">
+        <button data-t="in" aria-label="Zoom in"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
+        <button data-t="out" aria-label="Zoom out"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14"/></svg></button>
+        <button data-t="rot" aria-label="Rotate 90 degrees"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg></button>
+        <button data-t="fit" aria-label="Reset view"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+      </div>
+      <div class="tool-group glass">
+        <button data-v="3d" class="on" aria-label="3D view"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 2 3 7v10l9 5 9-5V7z"/><path d="m3 7 9 5 9-5M12 12v10"/></svg></button>
+        <button data-v="list" aria-label="List view"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg></button>
+      </div>
+      <div class="compass glass" aria-hidden="true"><b>N</b><svg viewBox="0 0 24 24" id="needle"><path d="M12 3 16 14H8z" fill="var(--accent)"/><path d="M12 21 8 14h8z" fill="var(--muted)" opacity=".5"/></svg></div>
+    </div>
+    <div class="note">Display grid only — not physical bed locations</div>
+    <div class="tip" id="tip" hidden></div>
+  </section>
+
+  <aside class="inspector glass" aria-live="polite">
+    <div class="insp-head"><small id="iSec">Section A · Ward 1</small><small id="iType">General bed</small></div>
+    <div class="hero well" id="hero"><div class="hero-id"><h3 id="iCode">W1-001</h3><span class="pill" id="iPill"><i></i>Available</span></div><svg id="heroSvg" aria-hidden="true"></svg></div>
+    <div class="tabs well" role="tablist"><button class="on" data-tab="details">Details</button><button data-tab="equipment">Equipment</button><button data-tab="patient">Patient</button></div>
+    <div class="insp-body" id="iBody"></div>
+    <div class="actions" id="iActions"></div>
+  </aside>
+
+  <section class="dock" aria-label="Ward summary">
+    <div class="card glass occ"><svg viewBox="0 0 120 120" id="donut" aria-hidden="true"></svg><div><h6>Occupancy</h6><div class="big" id="occPct">0%</div><p id="occSub"></p></div></div>
+    <div class="card glass stat"><h6>Ready now</h6><div class="big" id="ready" style="color:var(--mint-text)">0</div><p>available beds</p></div>
+    <div class="card glass stat"><h6>Waiting</h6><div class="big" style="color:var(--amber-text)">7</div><p>patients need a bed</p></div>
+    <div class="card glass"><h6>Live activity</h6><ul class="feed" id="feed"></ul></div>
+  </section>
+
+  <div class="pal glass" id="pal" role="dialog" aria-label="Palette"><h6 id="palTitle"></h6><ul id="palList"></ul></div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+  // ================= THEMES =================
+  // Each theme is exactly 10 colours. Backgrounds swap only the 3 base tones of the mode.
+  const DARK_BGS = [
+    { name: 'Midnight', a: '#08131c', b: '#102536', c: '#1c3a50' },
+    { name: 'Graphite', a: '#111315', b: '#1b1f23', c: '#2c3238' },
+    { name: 'Ink Blue', a: '#0c1a30', b: '#132a4a', c: '#21406b' },
+    { name: 'Theatre', a: '#08150f', b: '#10251c', c: '#1c3a2e' },
+    { name: 'Steel', a: '#1a242c', b: '#22303b', c: '#33475a' },
+    { name: 'Warm Charcoal', a: '#15130f', b: '#211d18', c: '#373027' },
+  ];
+  const LIGHT_BGS = [
+    { name: 'Mist', a: '#d9e3ea', b: '#eef3f6', c: '#c3d1dc' },
+    { name: 'Steel Light', a: '#d2dae1', b: '#e8edf1', c: '#bac6d0' },
+    { name: 'Sage Light', a: '#d9e4dd', b: '#eef4f0', c: '#c3d3c9' },
+    { name: 'Linen', a: '#e5e0d6', b: '#f4f1eb', c: '#d1c9bb' },
+  ];
+  const DARK_FIXED = { slate: '#4f6e85', fog: '#8da4b3', pearl: '#eef3f6', accent: '#7db4e6', mint: '#5ed3a5', coral: '#f3786a', amber: '#f4c35a' };
+  const LIGHT_FIXED = { slate: '#4f6e85', fog: '#8da4b3', ink: '#13212e', accent: '#2f6fa8', mint: '#2fae7f', coral: '#e05a4a', amber: '#dea024' };
+
+  const hexRgb = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16)).join(', ');
+  const T = { mode: 'dark', bg: 0 };
+  let C = {}; // resolved colours for SVG drawing
+  let PALETTE = []; // [name, role, hex] — the 10 colours of the active theme
+
+  function applyTheme() {
+    const dark = T.mode === 'dark';
+    const bgs = dark ? DARK_BGS : LIGHT_BGS;
+    const B = bgs[Math.min(T.bg, bgs.length - 1)];
+    const F = dark ? DARK_FIXED : LIGHT_FIXED;
+    // semantic roles → palette colours
+    const r = dark ? {
+      bg: B.a, ink: F.pearl, muted: F.fog, primary: F.pearl, onPrimary: B.a, dark: B.a,
+      glass: F.pearl, line: F.pearl, well: B.a, shadow: B.a, frame: B.c, sheet: F.pearl, shade: B.a, labelBg: B.b,
+      a: { glass1: .075, glass2: .03, edge: .07, line: .10, well: .35, shadow: .55, grid: .028, glow1: .17, glow2: .09, tab: .1, pill: .16, shade1: .3, shade2: .48, ground: .45, tray: .045, trayLine: .14 },
+      mintText: F.mint, amberText: F.amber, pillText: '',
+    } : {
+      bg: B.a, ink: F.ink, muted: F.slate, primary: F.ink, onPrimary: B.b, dark: F.ink,
+      glass: B.b, line: F.ink, well: B.c, shadow: F.slate, frame: B.c, sheet: B.b, shade: F.ink, labelBg: B.b,
+      a: { glass1: .78, glass2: .52, edge: .9, line: .12, well: .38, shadow: .22, grid: .05, glow1: .2, glow2: .12, tab: 1, pill: .22, shade1: .14, shade2: .26, ground: .18, tray: .55, trayLine: .16 },
+      mintText: F.ink, amberText: F.ink, pillText: F.ink,
+    };
+    const s = document.documentElement.style;
+    const set = (k, v) => s.setProperty('--' + k, v);
+    set('bg', r.bg); set('ink', r.ink); set('muted', r.muted); set('primary', r.primary); set('on-primary', r.onPrimary); set('dark', r.dark);
+    set('accent', F.accent); set('accent-rgb', hexRgb(F.accent));
+    set('glass-rgb', hexRgb(r.glass)); set('line-rgb', hexRgb(r.line)); set('well-rgb', hexRgb(r.well)); set('shadow-rgb', hexRgb(r.shadow));
+    set('glass-a1', r.a.glass1); set('glass-a2', r.a.glass2); set('edge-a', r.a.edge); set('line-a', r.a.line); set('well-a', r.a.well); set('shadow-a', r.a.shadow);
+    set('grid-a', r.a.grid); set('glow-a1', r.a.glow1); set('glow-a2', r.a.glow2); set('tab-a', r.a.tab); set('pill-a', r.a.pill);
+    for (const k of ['mint', 'coral', 'amber', 'fog', 'slate']) { set(k, F[k]); set(k + '-rgb', hexRgb(F[k])); }
+    set('mint-text', r.mintText); set('amber-text', r.amberText);
+    if (r.pillText) set('pill-text', r.pillText); else s.removeProperty('--pill-text');
+    document.documentElement.dataset.mode = T.mode;
+    C = { bg: r.bg, ink: r.ink, muted: r.muted, accent: F.accent, frame: r.frame, sheet: r.sheet, shade: r.shade, labelBg: r.labelBg, line: r.line, a: r.a,
+      mint: F.mint, coral: F.coral, amber: F.amber, fog: F.fog, slate: F.slate };
+    PALETTE = dark ? [
+      ['Base', 'Background', B.a], ['Surface', 'Labels, deep panels', B.b], ['Raised', 'Bed frames', B.c], ['Slate', 'Maintenance', F.slate], ['Fog', 'Secondary text · cleaning', F.fog],
+      ['Pearl', 'Text · primary button', F.pearl], ['Accent', 'Selection · links', F.accent], ['Mint', 'Available', F.mint], ['Coral', 'Occupied', F.coral], ['Amber', 'Reserved', F.amber],
+    ] : [
+      ['Base', 'Background', B.a], ['Frost', 'Glass panels · mattresses', B.b], ['Raised', 'Bed frames · wells', B.c], ['Slate', 'Secondary text · maintenance', F.slate], ['Fog', 'Cleaning', F.fog],
+      ['Ink', 'Text · primary button', F.ink], ['Accent', 'Selection · links', F.accent], ['Mint', 'Available', F.mint], ['Coral', 'Occupied', F.coral], ['Amber', 'Reserved', F.amber],
+    ];
+    document.querySelectorAll('.mode button').forEach((b) => { b.classList.toggle('on', b.dataset.mode === T.mode); b.setAttribute('aria-checked', String(b.dataset.mode === T.mode)); });
+    document.getElementById('bgPick').innerHTML = `<span>BG</span>` + bgs.map((b, i) =>
+      `<button role="radio" aria-checked="${i === T.bg}" class="${i === T.bg ? 'on' : ''}" data-bg="${i}" title="${b.name}" aria-label="${b.name} background" style="background:linear-gradient(135deg, ${b.c}, ${b.a})"></button>`).join('') + `<span class="name">${B.name}</span>`;
+    document.getElementById('palTitle').textContent = `${dark ? 'Dark' : 'Light'} · ${B.name} — the only 10 colours used`;
+    document.getElementById('palList').innerHTML = PALETTE.map(([n, role, hex]) => `<li><i style="background:${hex}"></i><span>${n}<small>${role}</small></span><code>${hex}</code></li>`).join('');
+  }
+
+  // ================= DATA (fictional) =================
+  const STATUS = {
+    AVAILABLE: { label: 'Available', c: 'mint' }, OCCUPIED: { label: 'Occupied', c: 'coral' }, RESERVED: { label: 'Reserved', c: 'amber' },
+    CLEANING: { label: 'Cleaning', c: 'fog' }, MAINTENANCE: { label: 'Maintenance', c: 'slate' },
+  };
+  const ORDER = Object.keys(STATUS);
+  const ICON = {
+    bed: '<path d="M3 6v13"/><path d="M3 15h18v4"/><path d="M21 15v-3a3 3 0 0 0-3-3h-8v6"/><circle cx="6.5" cy="11.5" r="1.8"/>',
+    user: '<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/>',
+    monitor: '<rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/><path d="M6 10h3l1.5-3 3 6 1.5-3h3"/>',
+    bell: '<path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>',
+    chart: '<path d="M3 3v18h18"/><path d="m7 15 4-4 3 3 5-6"/>',
+    hospital: '<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M12 7v6M9 10h6M9 21v-4h6v4"/>',
+    gear: '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-2.82 1.17V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 7.2 19.73l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 3.2 14.1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.27 7.2l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9.9 3.2V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 2.82 1.17l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 20.8 9.9H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1.1z"/>',
+  };
+  const svgIcon = (n) => `<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICON[n]}</svg>`;
+  const NAV = [['Bed Allocations', 'Beds', 'bed'], ['Patients', 'Patients', 'user'], ['Equipment', 'Equipment', 'monitor'], ['Alerts', 'Alerts', 'bell', 2], ['Reports', 'Reports', 'chart'], ['Setup', 'Setup', 'hospital'], ['Settings', 'Settings', 'gear']];
+  document.getElementById('nav').innerHTML = NAV.map(([full, short, i, b], k) => `<button class="${k === 0 ? 'on' : ''}" aria-current="${k === 0 ? 'page' : 'false'}" title="${full}" aria-label="${full}">${svgIcon(i)}${short}${b ? `<span class="badge">${b}</span>` : ''}</button>`).join('');
+
+  const WARDS = [
+    { id: 'W1', name: 'Ward 1', cat: 'General Ward', n: 100, type: 'General', occ: .3 },
+    { id: 'W2', name: 'Ward 2', cat: 'General Ward', n: 40, type: 'General', occ: .4 },
+    { id: 'ICU', name: 'ICU', cat: 'Critical Care', n: 20, type: 'ICU', occ: .7 },
+    { id: 'PED', name: 'Pediatrics', cat: 'Paediatrics', n: 30, type: 'Pediatric', occ: .3 },
+    { id: 'MAT', name: 'Maternity', cat: 'Maternity', n: 15, type: 'Maternity', occ: .35 },
+  ];
+  const CARE = ['General Medicine', 'Surgery Recovery', 'Critical Care', 'Paediatrics', 'Maternity'];
+  function rng(a) { return () => { a |= 0; a = (a + 0x6d2b79f5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+  WARDS.forEach((w, wi) => {
+    const r = rng(500 + wi);
+    w.beds = Array.from({ length: w.n }, (_, i) => {
+      const x = r(), n = i + 1;
+      const status = x < w.occ ? 'OCCUPIED' : x < w.occ + .08 ? 'RESERVED' : x < w.occ + .13 ? 'CLEANING' : x < w.occ + .17 ? 'MAINTENANCE' : 'AVAILABLE';
+      return {
+        id: `${w.id}-${String(n).padStart(3, '0')}`, n, status, type: w.type,
+        features: [...(n % 2 ? ['Oxygen outlet'] : []), ...(n % 10 === 0 ? ['Suction'] : [])],
+        devices: status === 'OCCUPIED' && r() < .4 ? [`MON-${String(Math.floor(r() * 60) + 1).padStart(3, '0')}`] : [],
+        patient: status === 'OCCUPIED' ? { code: `P-${wi + 1}${String(n).padStart(3, '0')}`, care: CARE[Math.floor(r() * CARE.length)], hours: Math.floor(r() * 70) + 2 } : null,
+        updated: Math.floor(r() * 240) + 3,
+      };
+    });
+  });
+  const S = { ward: 0, sel: null, filter: null, rot: 0, view: '3d', tab: 'details', vb: null, fit: null, q: '' };
+  const ward = () => WARDS[S.ward];
+  const sectionName = (i) => 'Section ' + 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'[i];
+  const scol = (s) => C[STATUS[s].c];
+  const scss = (s) => `--sc:var(--${STATUS[s].c});--sc-rgb:var(--${STATUS[s].c}-rgb)`;
+
+  // ================= ISOMETRIC DRAWING =================
+  const SC = 30, CX = Math.cos(Math.PI / 6), SY = 0.5;
+  const P = (x, y, z) => [(x - z) * CX * SC, (x + z) * SY * SC - y * SC];
+  const pts = (arr) => arr.map((p) => P(...p).map((v) => v.toFixed(1)).join(',')).join(' ');
+  function rotBox(b, k, cx, cz) {
+    let { x0, x1, z0, z1 } = b;
+    for (let i = 0; i < k; i++) { const nx0 = cx - (z1 - cz), nx1 = cx - (z0 - cz), nz0 = cz + (x0 - cx), nz1 = cz + (x1 - cx); x0 = nx0; x1 = nx1; z0 = nz0; z1 = nz1; }
+    return Object.assign({}, b, { x0, x1, z0, z1 });
+  }
+  function box(b, fill) {
+    const { x0, x1, y0, y1, z0, z1 } = b;
+    const top = pts([[x0, y1, z0], [x1, y1, z0], [x1, y1, z1], [x0, y1, z1]]);
+    const front = pts([[x0, y0, z1], [x1, y0, z1], [x1, y1, z1], [x0, y1, z1]]);
+    const side = pts([[x1, y0, z0], [x1, y0, z1], [x1, y1, z1], [x1, y1, z0]]);
+    return `<polygon points="${front}" fill="${fill}"/><polygon points="${front}" fill="${C.shade}" opacity="${C.a.shade1}"/>` +
+      `<polygon points="${side}" fill="${fill}"/><polygon points="${side}" fill="${C.shade}" opacity="${C.a.shade2}"/>` +
+      `<polygon points="${top}" fill="${fill}"/>`;
+  }
+  function bedSvg(bx, bz, color, k, withRing = true) {
+    const cx = bx + .5, cz = bz + 1;
+    const L = (o) => rotBox({ x0: bx + o[0], x1: bx + o[1], y0: o[2], y1: o[3], z0: bz + o[4], z1: bz + o[5] }, k, cx, cz);
+    const head = L([0, 1, .22, 1.02, 0, .09]), frame = L([0, 1, .22, .42, 0, 2]), mattress = L([.05, .95, .42, .58, .1, 1.94]);
+    const pillow = L([.2, .8, .58, .7, .16, .5]), blanket = L([.02, .98, .55, .66, .78, 1.98]), cuff = L([.02, .98, .62, .68, .7, .86]), foot = L([0, 1, .22, .62, 1.92, 2]);
+    const headFar = (head.x0 + head.z0) < (frame.x0 + frame.z0 + 1.4);
+    const g = P(cx, 0, cz);
+    let out = `<ellipse cx="${g[0].toFixed(1)}" cy="${(g[1] + 4).toFixed(1)}" rx="${(SC * 1.15).toFixed(1)}" ry="${(SC * .62).toFixed(1)}" fill="${C.shade}" opacity="${C.a.ground}"/>`;
+    if (withRing) out += `<ellipse class="ring" cx="${g[0].toFixed(1)}" cy="${(g[1] + 4).toFixed(1)}" rx="${(SC * 1.45).toFixed(1)}" ry="${(SC * .82).toFixed(1)}" fill="none" stroke="${C.accent}" stroke-width="2.5"/>`;
+    if (headFar) out += box(head, color);
+    for (const [b, f] of [[frame, C.frame], [foot, color], [mattress, C.sheet], [pillow, C.sheet], [blanket, color], [cuff, C.sheet]]) out += box(b, f);
+    if (!headFar) out += box(head, color);
+    return out;
+  }
+  function layout(beds) {
+    const per = 10, cols = 5, g = Math.ceil(beds.length / per);
+    const gw = cols + 4 * .45 + 1.2, gd = 2 * 2 + .8 + 1.2;
+    const gc = g > 6 ? 3 : g > 1 ? 2 : 1, gr = Math.ceil(g / gc), gap = 1.5;
+    const W = gc * gw + (gc - 1) * gap, D = gr * gd + (gr - 1) * gap;
+    const secs = [];
+    for (let s = 0; s < g; s++) secs.push({ i: s, x: (s % gc) * (gw + gap) - W / 2, z: Math.floor(s / gc) * (gd + gap) - D / 2, w: gw, d: gd });
+    const pos = beds.map((b, i) => { const s = secs[Math.floor(i / per)], k = i % per; return { x: s.x + .6 + (k % cols) * 1.45, z: s.z + .6 + Math.floor(k / cols) * 2.8 }; });
+    return { secs, pos };
+  }
+  const rotPoint = (x, z, k) => { for (let i = 0; i < k; i++) [x, z] = [-z, x]; return [x, z]; };
+
+  const canvas = document.getElementById('canvas');
+  function renderStage(keepView) {
+    const w = ward(), L = layout(w.beds), k = S.rot;
+    let trays = '', labels = '';
+    const rects = L.secs.map((s) => rotBox({ x0: s.x, x1: s.x + s.w, y0: -.12, y1: 0, z0: s.z, z1: s.z + s.d }, k, 0, 0));
+    rects.forEach((r, i) => {
+      trays += `<polygon points="${pts([[r.x0, 0, r.z0], [r.x1, 0, r.z0], [r.x1, 0, r.z1], [r.x0, 0, r.z1]])}" fill="${C.sheet}" fill-opacity="${C.a.tray}" stroke="${C.line}" stroke-opacity="${C.a.trayLine}" stroke-width="1.2"/>` +
+        `<polygon points="${pts([[r.x0, -.18, r.z1], [r.x1, -.18, r.z1], [r.x1, 0, r.z1], [r.x0, 0, r.z1]])}" fill="${C.accent}" fill-opacity=".1"/>` +
+        `<polygon points="${pts([[r.x1, -.18, r.z0], [r.x1, -.18, r.z1], [r.x1, 0, r.z1], [r.x1, 0, r.z0]])}" fill="${C.accent}" fill-opacity=".06"/>`;
+      const members = w.beds.slice(i * 10, i * 10 + 10), free = members.filter((b) => b.status === 'AVAILABLE').length;
+      const far = [[r.x0, r.z0], [r.x1, r.z0], [r.x1, r.z1], [r.x0, r.z1]].map(([x, z]) => P(x, 0, z)).reduce((a, c) => (c[1] < a[1] ? c : a));
+      labels += `<g class="sec-label" data-sec="${i}" transform="translate(${far[0].toFixed(1)},${(far[1] - 62).toFixed(1)})"><line x1="0" y1="22" x2="0" y2="56" stroke="${C.accent}" stroke-opacity=".55" stroke-width="1.5" stroke-dasharray="3 3"/><circle cy="58" r="3" fill="${C.accent}"/><rect x="-62" y="-22" width="124" height="44" rx="13" fill="${C.labelBg}" fill-opacity=".94" stroke="${C.accent}" stroke-opacity=".6" stroke-width="1.2"/><text y="-2" text-anchor="middle" fill="${C.ink}" font-size="15" font-weight="800">${sectionName(i)}</text><text y="14" text-anchor="middle" fill="${C.muted}" font-size="12" font-weight="700">${free}/${members.length} free</text></g>`;
+    });
+    const items = w.beds.map((b, i) => {
+      const p = L.pos[i], [rx, rz] = rotPoint(p.x + .5, p.z + 1, k);
+      return { depth: rx + rz, svg: `<g class="bed" data-id="${b.id}">${bedSvg(rx - .5, rz - 1, scol(b.status), k)}</g>` };
+    }).sort((a, b) => a.depth - b.depth);
+    const all = [];
+    rects.forEach((r) => [[r.x0, 0, r.z0], [r.x1, 0, r.z0], [r.x1, 0, r.z1], [r.x0, 0, r.z1]].forEach((q) => all.push(P(...q))));
+    const xs = all.map((q) => q[0]), ys = all.map((q) => q[1]);
+    const fit = { x: Math.min(...xs) - 24, y: Math.min(...ys) - 150, w: Math.max(...xs) - Math.min(...xs) + 48, h: Math.max(...ys) - Math.min(...ys) + 190 };
+    S.fit = fit; if (!keepView || !S.vb) S.vb = Object.assign({}, fit);
+    canvas.innerHTML = `<svg id="svg" viewBox="${vbStr()}" preserveAspectRatio="xMidYMid meet" role="img" aria-label="${w.name} beds"><g>${trays}</g><g>${items.map((x) => x.svg).join('')}</g><g>${labels}</g></svg>`;
+    document.getElementById('needle').style.transform = `rotate(${-S.rot * 90}deg)`;
+    paint();
+  }
+  const vbStr = () => `${S.vb.x.toFixed(1)} ${S.vb.y.toFixed(1)} ${S.vb.w.toFixed(1)} ${S.vb.h.toFixed(1)}`;
+  const setVB = () => { const s = document.getElementById('svg'); if (s) s.setAttribute('viewBox', vbStr()); };
+  const matches = (b) => { const q = S.q.trim().toLowerCase(); return (!S.filter || b.status === S.filter) && (!q || b.id.toLowerCase().includes(q)); };
+  function paint() {
+    document.querySelectorAll('.bed').forEach((g) => { const b = ward().beds.find((x) => x.id === g.dataset.id); g.classList.toggle('dim', !matches(b)); g.classList.toggle('sel', S.sel === b.id); });
+    document.querySelectorAll('.tile').forEach((t) => t.classList.toggle('sel', t.dataset.id === S.sel));
+  }
+
+  // ================= UI =================
+  const counts = () => { const c = {}; ORDER.forEach((s) => (c[s] = 0)); ward().beds.forEach((b) => c[b.status]++); return c; };
+  const pill = (s) => `<span class="pill" style="${scss(s)}"><i></i>${STATUS[s].label}</span>`;
+  function renderWards() { document.getElementById('wards').innerHTML = WARDS.map((w, i) => `<button role="tab" aria-selected="${i === S.ward}" class="${i === S.ward ? 'on' : ''}" data-w="${i}">${w.name}<span>${w.n}</span></button>`).join(''); }
+  function renderChips() {
+    const c = counts(), w = ward(), secs = Math.ceil(w.n / 10);
+    document.getElementById('chips').innerHTML = ORDER.map((s) => `<button class="chip well ${S.filter === s ? 'on' : ''}" data-f="${s}" style="${scss(s)}" aria-pressed="${S.filter === s}"><small><i></i>${STATUS[s].label}</small><strong>${c[s]}</strong></button>`).join('');
+    document.getElementById('wName').textContent = w.name;
+    document.getElementById('wSub').textContent = `${w.n} beds · ${w.cat} · ${secs} section${secs > 1 ? 's' : ''}`;
+  }
+  function renderList() {
+    const w = ward(); let html = '';
+    for (let s = 0; s * 10 < w.n; s++) {
+      const m = w.beds.slice(s * 10, s * 10 + 10).filter(matches);
+      if (m.length) html += `<h4>${sectionName(s)}</h4><div class="tiles">${m.map((b) => `<button class="tile well" data-id="${b.id}"><b>${b.id}</b>${pill(b.status)}</button>`).join('')}</div>`;
+    }
+    document.getElementById('list').innerHTML = html || '<h4>No beds match</h4>';
+  }
+  function renderDock() {
+    const c = counts(), n = ward().n, r = 46, circ = 2 * Math.PI * r;
+    let off = 0;
+    const segs = ORDER.map((s) => { const len = (c[s] / n) * circ; const seg = `<circle r="${r}" cx="60" cy="60" fill="none" stroke="${scol(s)}" stroke-width="12" stroke-dasharray="${len} ${circ - len}" stroke-dashoffset="${-off}"/>`; off += len; return seg; }).join('');
+    document.getElementById('donut').innerHTML = `<g transform="rotate(-90 60 60)"><circle r="${r}" cx="60" cy="60" fill="none" stroke="${C.line}" stroke-opacity=".08" stroke-width="12"/>${segs}</g><text x="60" y="66" text-anchor="middle" fill="${C.ink}" font-size="20" font-weight="800">${n}</text>`;
+    document.getElementById('occPct').textContent = Math.round((c.OCCUPIED / n) * 100) + '%';
+    document.getElementById('occSub').textContent = `${c.OCCUPIED} occupied · ${c.RESERVED} reserved`;
+    document.getElementById('ready').textContent = c.AVAILABLE;
+    const w = ward(), f = (i) => w.beds[(i * 7) % w.n].id;
+    const feed = [['AVAILABLE', `${f(1)} marked available`, '2m'], ['OCCUPIED', `${f(2)} allocated to P-90${10 + S.ward}`, '9m'], ['RESERVED', `${f(3)} reserved for admission`, '21m'], ['CLEANING', `${f(4)} sent for cleaning`, '34m']];
+    document.getElementById('feed').innerHTML = feed.map(([s, t, m]) => `<li style="${scss(s)}"><i></i><span>${t}</span><time>${m}</time></li>`).join('');
+  }
+  function renderInspector() {
+    const w = ward(), b = w.beds.find((x) => x.id === S.sel) || w.beds[0];
+    const idx = w.beds.indexOf(b), sec = Math.floor(idx / 10), st = STATUS[b.status];
+    document.getElementById('iSec').textContent = `${sectionName(sec)} · ${w.name}`;
+    document.getElementById('iType').textContent = `${b.type} bed`;
+    document.getElementById('iCode').textContent = b.id;
+    const p = document.getElementById('iPill'); p.setAttribute('style', scss(b.status)); p.innerHTML = `<i></i>${st.label}`;
+    document.getElementById('hero').style.setProperty('--glow', `rgba(var(--${st.c}-rgb), .38)`);
+    const hs = document.getElementById('heroSvg'); hs.setAttribute('viewBox', '-150 -70 250 110'); hs.setAttribute('preserveAspectRatio', 'xMaxYMid meet');
+    hs.innerHTML = `<g transform="translate(40,2) scale(1.05)">${bedSvg(-.5, -1, scol(b.status), 0, false)}</g>`;
+    document.querySelectorAll('.tabs button').forEach((t) => t.classList.toggle('on', t.dataset.tab === S.tab));
+    let body;
+    if (S.tab === 'details') body = `<dl class="kv"><dt>Ward</dt><dd>${w.name}</dd><dt>Section</dt><dd>${sectionName(sec)}</dd><dt>Bed type</dt><dd>${b.type}</dd><dt>Features</dt><dd>${b.features.join(', ') || '—'}</dd><dt>Updated</dt><dd>${b.updated} min ago</dd></dl>`;
+    else if (S.tab === 'equipment') body = `<dl class="kv"><dt>Fixed fittings</dt><dd>${b.features.join(', ') || 'None'}</dd><dt>Devices</dt><dd>${b.devices.join(', ') || 'None assigned'}</dd></dl>`;
+    else body = b.patient ? `<dl class="kv"><dt>Patient</dt><dd>${b.patient.code} (demo)</dd><dt>Care</dt><dd>${b.patient.care}</dd><dt>In bed</dt><dd>${b.patient.hours} h</dd></dl>` : `<dl class="kv"><dt>Patient</dt><dd>No patient assigned</dd></dl>`;
+    const members = w.beds.slice(sec * 10, sec * 10 + 10);
+    body += `<div class="sec-strip"><h5><span>${sectionName(sec)}</span><span>${members.filter((x) => x.status === 'AVAILABLE').length} free</span></h5><div class="mini-grid">${members.map((m) => `<button class="mini well ${m.id === b.id ? 'sel' : ''}" data-id="${m.id}" style="${scss(m.status)}" aria-label="${m.id}, ${STATUS[m.status].label}"><i></i>${String(m.n).padStart(3, '0')}</button>`).join('')}</div></div>`;
+    document.getElementById('iBody').innerHTML = body;
+    const primary = b.status === 'AVAILABLE' ? 'Assign patient' : b.status === 'OCCUPIED' ? `View patient ${b.patient.code}` : 'Mark available';
+    const moves = b.status === 'OCCUPIED' ? [] : ORDER.filter((s) => s !== b.status && s !== 'OCCUPIED').slice(0, 3);
+    document.getElementById('iActions').innerHTML = `<button class="btn-primary">${svgIcon(b.status === 'OCCUPIED' ? 'user' : 'bed')}${primary}</button>` +
+      (moves.length ? `<div class="btn-row">${moves.map((s) => `<button class="btn-ghost well" data-set="${s}" style="${scss(s)}"><i></i>${STATUS[s].label}</button>`).join('')}</div>` : `<div class="btn-row"><button class="btn-ghost well">Discharge</button><button class="btn-ghost well">Transfer</button></div>`);
+  }
+  function all(keepView) { renderWards(); renderChips(); renderStage(keepView); renderList(); renderDock(); renderInspector(); }
+
+  // ================= INTERACTION =================
+  let drag = null, moved = 0;
+  document.getElementById('palBtn').addEventListener('click', () => document.getElementById('pal').classList.toggle('open'));
+  document.addEventListener('click', (e) => {
+    const t = e.target.closest('[data-mode],[data-bg],[data-w],[data-f],[data-id],[data-tab],[data-t],[data-v],[data-set],.sec-label');
+    if (!t) return;
+    if (t.dataset.mode) { if (T.mode !== t.dataset.mode) { T.mode = t.dataset.mode; T.bg = 0; applyTheme(); all(true); } }
+    else if (t.dataset.bg != null) { T.bg = +t.dataset.bg; applyTheme(); all(true); }
+    else if (t.dataset.w != null) { S.ward = +t.dataset.w; S.sel = ward().beds[0].id; S.filter = null; all(false); }
+    else if (t.dataset.f) { S.filter = S.filter === t.dataset.f ? null : t.dataset.f; renderChips(); paint(); renderList(); }
+    else if (t.dataset.tab) { S.tab = t.dataset.tab; renderInspector(); }
+    else if (t.dataset.set) { ward().beds.find((x) => x.id === S.sel).status = t.dataset.set; all(true); }
+    else if (t.dataset.t) {
+      if (t.dataset.t === 'rot') { S.rot = (S.rot + 1) % 4; renderStage(false); return; }
+      if (t.dataset.t === 'fit') { S.vb = Object.assign({}, S.fit); setVB(); return; }
+      const v = S.vb, z = t.dataset.t === 'in' ? .8 : 1.25, cx = v.x + v.w / 2, cy = v.y + v.h / 2;
+      v.w *= z; v.h *= z; v.x = cx - v.w / 2; v.y = cy - v.h / 2; setVB();
+    } else if (t.dataset.v) {
+      S.view = t.dataset.v; document.querySelectorAll('[data-v]').forEach((b) => b.classList.toggle('on', b.dataset.v === S.view));
+      document.getElementById('stage').classList.toggle('list-mode', S.view === 'list');
+    } else if (t.classList.contains('sec-label')) { S.sel = ward().beds[+t.dataset.sec * 10].id; paint(); renderInspector(); }
+    else if (t.dataset.id) { if (moved > 5) return; S.sel = t.dataset.id; paint(); renderInspector(); }
+  });
+  canvas.addEventListener('pointerdown', (e) => { drag = { x: e.clientX, y: e.clientY }; moved = 0; });
+  window.addEventListener('pointermove', (e) => {
+    const tip = document.getElementById('tip');
+    if (drag) {
+      const s = document.getElementById('svg'), rect = s.getBoundingClientRect(), k = Math.max(S.vb.w / rect.width, S.vb.h / rect.height);
+      const dx = e.clientX - drag.x, dy = e.clientY - drag.y; moved += Math.abs(dx) + Math.abs(dy);
+      if (moved > 5) { S.vb.x -= dx * k; S.vb.y -= dy * k; setVB(); s.classList.add('drag'); }
+      drag = { x: e.clientX, y: e.clientY }; tip.hidden = true; return;
+    }
+    const g = e.target.closest && e.target.closest('.bed');
+    if (g) {
+      const b = ward().beds.find((x) => x.id === g.dataset.id), r = document.getElementById('stage').getBoundingClientRect();
+      tip.textContent = `${b.id} · ${STATUS[b.status].label}`; tip.style.left = (e.clientX - r.left) + 'px'; tip.style.top = (e.clientY - r.top) + 'px'; tip.hidden = false;
+    } else tip.hidden = true;
+  });
+  window.addEventListener('pointerup', () => { drag = null; const s = document.getElementById('svg'); if (s) s.classList.remove('drag'); });
+  canvas.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    const s = document.getElementById('svg'), rect = s.getBoundingClientRect(), v = S.vb, z = Math.exp(e.deltaY * .0012);
+    const k = Math.max(v.w / rect.width, v.h / rect.height), mx = v.x + (e.clientX - rect.left) * k, my = v.y + (e.clientY - rect.top) * k;
+    v.x = mx - (mx - v.x) * z; v.y = my - (my - v.y) * z; v.w *= z; v.h *= z; setVB();
+  }, { passive: false });
+  const q = document.getElementById('q');
+  q.addEventListener('input', () => { S.q = q.value; paint(); renderList(); });
+  q.addEventListener('keydown', (e) => { if (e.key === 'Enter') { const b = ward().beds.find(matches); if (b) { S.sel = b.id; paint(); renderInspector(); } } });
+  document.addEventListener('keydown', (e) => { if (e.key === '/' && document.activeElement !== q) { e.preventDefault(); q.focus(); } });
+
+  // start in the mode/background given in the URL, e.g. #light or #dark-1
+  const m = location.hash.match(/^#(dark|light)(?:-(\d))?$/);
+  if (m) { T.mode = m[1]; T.bg = +(m[2] || 0); }
+  applyTheme();
+  S.sel = ward().beds[2].id;
+  all(false);
+})();
+</script>
+</body>
+</html>

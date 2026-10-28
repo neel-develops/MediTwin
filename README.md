@@ -14,20 +14,23 @@ powershell -ExecutionPolicy Bypass -File serve.ps1
 
 Then open http://localhost:5173/ (tests: http://localhost:5173/tests.html).
 
-Any static file server also works (for example `npx serve` or `python -m http.server 5173` if you have Node or Python). An internet connection is needed for Three.js (loaded from jsDelivr) and the Inter font. If Three.js can't load, the explorer falls back to the list view.
+Any static file server also works (for example `npx serve` or `python -m http.server 5173` if you have Node or Python). An internet connection is needed for Three.js (loaded from jsDelivr) and the Inter font. If Three.js can't load, Bed Allocations falls back to the list view.
+
+Old links keep working: `#/explorer` and `#/dashboard` redirect to `#/allocations`.
+
+**Design:** "Graphite" dark glass theme. The whole UI, including the 3D beds, uses exactly 10 colours defined once at the top of `styles.css` (and mirrored in `js/scene.js`): base `#111315`, panel `#1b1f23`, raised `#2c3238`, slate `#4f6e85`, fog `#8da4b3`, pearl `#eef3f6`, accent `#7db4e6`, mint `#5ed3a5`, coral `#f3786a`, amber `#f4c35a`. The original concept with dark/light background options is at `concepts/midnight-ward.html`.
 
 ## What's included
 
 | Area | Where |
 |---|---|
-| Dashboard: bed and device totals, ward bars, activity, quick actions, alerts | `#/dashboard` |
-| 3D Explorer: auto-laid-out grid, visual groups of N beds, click to select, zoom/rotate/pan/reset, auto-rotate, status chips as filters, bed-ID search, list (2D) fallback, detail panel with Details/Equipment/Patient tabs and valid actions | `#/explorer` |
+| **Bed Allocations** (opens by default): 3D bed inventory with auto-laid-out sections, click to select, zoom/rotate/pan/reset, auto-rotate, status chips as filters, bed-ID search, list (2D) fallback, detail panel with Details/Equipment/Patient tabs and valid actions, ward overview, recent activity, quick actions and alerts. An all-wards bed table is at `#/beds`. | `#/allocations` |
 | Patient Flow: Waiting → Matching → Allocated → Admitted board with live counts, priority/care/bed-type/ward filters, search and paging; details panel with ranked bed matches; "See in 3D" highlights only suitable beds and lets you confirm the allocation there; admit, cancel, discharge/transfer | `#/patients` |
-| Beds & Resources: filterable table of every bed | `#/beds` |
 | Equipment: individually tracked devices (Monitor, Ventilator, Infusion Pump) and counted stock | `#/equipment` |
 | Alerts & activity log | `#/alerts` |
 | Reports: occupancy, equipment utilization, allocation history, **simulated** demand surge (writes nothing) | `#/reports` |
-| Setup: create/edit/deactivate wards, set bed count safely, thresholds, bed-type compatibility, seed/reset demo data | `#/setup` |
+| Setup: create/edit/deactivate wards, set bed count safely, seed/reset demo data, data-consistency check | `#/setup` |
+| Settings: alert thresholds, device minimums, visual section size, release-to-cleaning rule, bed-type compatibility | `#/settings` |
 
 Global search (top bar) finds beds, wards, equipment and patients.
 
