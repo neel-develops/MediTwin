@@ -159,7 +159,7 @@ export function AssistantPanel({ open, onClose, prompt, nonce }: { open: boolean
       <div className="drawer-backdrop" onClick={onClose} />
       <aside ref={panelRef} className="drawer ai-drawer" role="dialog" aria-modal="true" aria-label="MediTwin AI assistant" tabIndex={-1}>
         <header>
-          <div className="ai-avatar" aria-hidden="true"><Icon name="spark" /></div>
+          <div className="ai-avatar brand-avatar" aria-hidden="true"><img src="/brand/logo-mark.png" alt="" /></div>
           <div className="ai-drawer-title">
             <strong>MediTwin AI</strong>
             <small className="muted">{engine} · reads live hospital data</small>

@@ -1,3 +1,5 @@
+<p align="center"><img src="frontend/public/brand/logo-full.png" alt="MediTwin" width="420" /></p>
+
 # MediTwin — Smarter Hospital Resource Allocation
 
 A full-stack hospital **bed and equipment command center** with an explainable **AI allocation engine** and a data-driven **3D bed inventory**.

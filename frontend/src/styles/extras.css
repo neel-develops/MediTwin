@@ -93,3 +93,12 @@ main .page { padding-bottom: 6px; }
 select option, select optgroup { background-color: var(--panel); color: var(--text); }
 select option:checked { background-color: var(--raised); color: var(--pearl); }
 select option:disabled { color: var(--text-2); }
+
+/* brand logo (exact artwork on its own background #0f131b) */
+.sidenav .brand { padding: 0; background: none; border: 0; box-shadow: none; border-radius: 0; transition: transform .16s cubic-bezier(.23, 1, .32, 1); }
+.sidenav .brand:hover { transform: scale(1.04); }
+.sidenav .brand:active { transform: scale(.97); }
+.sidenav .brand { height: auto; aspect-ratio: 672 / 453; }
+.sidenav .brand .brand-logo { display: block; width: 100%; height: 100%; object-fit: contain; user-select: none; }
+.ai-avatar.brand-avatar { padding: 0; overflow: hidden; background: #0f131b; border: 1px solid rgba(238, 243, 246, .12); }
+.ai-avatar.brand-avatar img { width: 100%; height: 100%; object-fit: contain; transform: scale(1.15); }

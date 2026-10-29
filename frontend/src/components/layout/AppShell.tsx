@@ -34,7 +34,7 @@ function Sidenav({ onNavigate }: { onNavigate: () => void }) {
   return (
     <nav className="sidenav" id="sidenav" aria-label="Main">
       <Link className="brand" to="/" aria-label="MediTwin home — Dashboard" title="MediTwin · Smarter Hospital Resource Allocation" onClick={onNavigate}>
-        <span className="brand-mark" aria-hidden="true" />
+        <img className="brand-logo" src="/brand/logo-transparent.png" alt="" draggable={false} />
       </Link>
       {NAV.map((item) => {
         const active = item.end ? section === item.to : section === item.to || section.startsWith(`${item.to}/`)

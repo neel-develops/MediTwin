@@ -2,13 +2,35 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="MediTwin — smarter hospital bed and resource allocation with explainable AI." />
     <title>MediTwin · Smarter Hospital Resource Allocation</title>
+    <meta name="description" content="MediTwin — smarter hospital bed and resource allocation with explainable AI." />
+    <meta name="theme-color" content="#0f131b" />
+    <link rel="icon" href="/favicon.ico" sizes="any" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/brand/icon-32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/brand/icon-16.png" />
+    <link rel="apple-touch-icon" href="/brand/icon-180.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="MediTwin · Smarter Hospital Resource Allocation" />
+    <meta property="og:description" content="A live digital twin of hospital beds, equipment and patients, with explainable AI bed allocation." />
+    <meta property="og:image" content="/brand/og-image.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="/brand/og-image.png" />
+    <style>
+      /* launch splash — replaced by React on mount */
+      html, body { background: #111315; margin: 0; }
+      .mt-splash { position: fixed; inset: 0; display: grid; place-items: center; background: #0f131b; }
+      .mt-splash img { width: min(420px, 70vw); height: auto; animation: mt-in .6s cubic-bezier(.23,1,.32,1) both; }
+      .mt-splash i { position: absolute; bottom: 18%; width: 120px; height: 3px; border-radius: 3px; background: rgba(238,243,246,.08); overflow: hidden; }
+      .mt-splash i::after { content: ''; position: absolute; inset: 0; width: 40%; border-radius: 3px; background: #5ed3a5; animation: mt-bar 1.1s ease-in-out infinite; }
+      @keyframes mt-in { from { opacity: 0; transform: translateY(8px) scale(.98); } }
+      @keyframes mt-bar { from { transform: translateX(-100%); } to { transform: translateX(250%); } }
+      @media (prefers-reduced-motion: reduce) { .mt-splash img, .mt-splash i::after { animation: none; } }
+    </style>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root"><div class="mt-splash" role="status" aria-label="Loading MediTwin"><img src="/brand/logo-full.png" alt="MediTwin" /><i></i></div></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
