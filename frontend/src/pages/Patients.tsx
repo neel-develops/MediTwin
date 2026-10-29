@@ -4,6 +4,7 @@ import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'rea
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { Icon } from '../components/g/Icon'
 import { PageError, PRIORITY_LABEL, Skeleton } from '../components/g/parts'
+import { BedQueue } from '../components/patients/BedQueue'
 import { PatientDetailPanel } from '../components/patients/PatientDetail'
 import {
   FLOW_STAGES, fmtDur, isFlowStage, PAGE_SIZE, pageNumbers, PatientCard, PrioPill, STAGE_META, type FlowStage,
@@ -16,9 +17,42 @@ import '../styles/pages/Patients.css'
 
 const EMPTY_FILTERS = { priority: '', care: '', bed_type: '', ward_id: '' }
 
+/* Patients: "Bed queue" (waiting patients as bed passes, default) or the full "Patient flow" board. */
 export default function Patients() {
   const ui = useUI()
   const nav = useNavigate()
+  const [sp, setSp] = useSearchParams()
+  const flowView = sp.get('view') === 'flow' || !!sp.get('stage') || !!sp.get('status')
+  const patch = useCallback((fn: (n: URLSearchParams) => void) => {
+    setSp((cur) => { const n = new URLSearchParams(cur); fn(n); return n }, { replace: true })
+  }, [setSp])
+  const rawPatient = Number(sp.get('patient'))
+  const patientId = Number.isFinite(rawPatient) && rawPatient > 0 ? rawPatient : null
+
+  // ?register=1 opens the register modal (her `params.register`).
+  useEffect(() => {
+    if (sp.get('register')) { ui.openRegister(); patch((n) => n.delete('register')) }
+  }, [sp, ui, patch])
+
+  const setView = (flow: boolean) => patch((n) => { n.delete('stage'); n.delete('status'); if (flow) n.set('view', 'flow'); else n.delete('view') })
+  return (
+    <div className={`page pflow ${flowView ? '' : 'pqueue'}`}>
+      <div className="page-head"><div><h1>Patients</h1><p className="muted">Live from stored records · priority is staff-set, not clinical triage</p></div>
+        <div className="head-actions">
+          <div className="seg-toggle" role="tablist" aria-label="Patients view">
+            <button role="tab" aria-selected={!flowView} className={!flowView ? 'on' : ''} onClick={() => setView(false)}><Icon name="bed" />Bed queue</button>
+            <button role="tab" aria-selected={flowView} className={flowView ? 'on' : ''} onClick={() => setView(true)}><Icon name="activity" />Patient flow</button>
+          </div>
+          <button className="btn" onClick={() => nav('/ai?tab=plan')}><Icon name="wand" />AI plan for queue</button>
+          <button className="btn primary" onClick={() => ui.openRegister()}><Icon name="plus" />Register patient</button>
+        </div></div>
+      {flowView ? <FlowBoard />
+        : <BedQueue patientId={patientId} onOpen={(id) => patch((n) => n.set('patient', String(id)))} onClose={() => patch((n) => n.delete('patient'))} />}
+    </div>
+  )
+}
+
+function FlowBoard() {
   const meta = useMeta()
   const wards = useWards()
   const [sp, setSp] = useSearchParams()
@@ -48,15 +82,10 @@ export default function Patients() {
   const pick = useCallback((id: number) => patch((n) => n.set('patient', String(id))), [patch])
   const closePatient = useCallback(() => patch((n) => n.delete('patient')), [patch])
   const setStage = (s: FlowStage | '') => patch((n) => {
-    n.delete('status')
+    n.delete('status'); n.set('view', 'flow')
     if (s && s !== stage) n.set('stage', s); else n.delete('stage')
   })
-  const backToBoard = () => patch((n) => { n.delete('status'); n.delete('stage') })
-
-  // ?register=1 opens the register modal (her `params.register`).
-  useEffect(() => {
-    if (sp.get('register')) { ui.openRegister(); patch((n) => n.delete('register')) }
-  }, [sp, ui, patch])
+  const backToBoard = () => patch((n) => { n.delete('status'); n.delete('stage'); n.set('view', 'flow') })
 
   const base = { search: q, care_category: filters.care, bed_type: filters.bed_type, priority: filters.priority, ward_id: filters.ward_id }
   const flow = useFlow(stage ? { ...base, stage, page, page_size: PAGE_SIZE } : { ...base, per_column: 5 })
@@ -69,13 +98,7 @@ export default function Patients() {
   if (flow.isError && !f) return <PageError error={flow.error} onRetry={() => flow.refetch()} />
 
   return (
-    <div className="page pflow">
-      <div className="page-head"><div><h1>Patient Flow</h1><p className="muted">Live from stored records · priority is staff-set, not clinical triage</p></div>
-        <div className="head-actions">
-          <button className="btn" onClick={() => nav('/ai?tab=plan')}><Icon name="wand" />AI plan for queue</button>
-          <button className="btn primary" onClick={() => ui.openRegister()}><Icon name="plus" />Register patient</button>
-        </div></div>
-
+    <>
       <section className="flow-strip" aria-label="Patient flow stages">
         {f ? <FlowStrip f={f} stage={stage} onStage={setStage} /> : FLOW_STAGES.map((s, i) => (
           <Fragment key={s}>{i > 0 && <span className="flow-arrow" aria-hidden="true"><i /></span>}<div className="pf-skel-tile"><Skeleton h={86} style={{ borderRadius: 18 }} /></div></Fragment>
@@ -133,7 +156,7 @@ export default function Patients() {
           {patientId != null ? <PatientDetailPanel id={patientId} onClose={closePatient} /> : <CommandSummary f={f} onPick={pick} />}
         </aside>
       </div>
-    </div>
+    </>
   )
 }
 

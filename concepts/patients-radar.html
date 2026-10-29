@@ -1,0 +1,366 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>MediTwin · Patients concept — Triage Radar & AI Match Board</title>
+<style>
+  :root {
+    --base:#111315; --panel:#1b1f23; --raised:#2c3238; --slate:#4f6e85; --fog:#8da4b3; --pearl:#eef3f6;
+    --accent:#7db4e6; --mint:#5ed3a5; --coral:#f3786a; --amber:#f4c35a;
+    --border:rgba(238,243,246,.09); --border-strong:rgba(238,243,246,.16); --text-2:#9aabb8;
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  body { margin:0; background: radial-gradient(1200px 700px at 70% -10%, rgba(125,180,230,.10), transparent 60%), var(--base);
+    color: var(--pearl); font: 14px/1.45 Manrope, "Segoe UI", system-ui, sans-serif; min-height: 100vh; }
+  .wrap { max-width: 1440px; margin: 0 auto; padding: 22px 26px; display: flex; flex-direction: column; gap: 16px; height: 100vh; }
+  header { display:flex; align-items:center; justify-content:space-between; gap: 16px; }
+  h1 { margin:0; font-size: 21px; letter-spacing: -.01em; }
+  header p { margin: 2px 0 0; color: var(--text-2); font-size: 13px; }
+  .seg { display:flex; padding: 4px; gap: 4px; background: var(--panel); border:1px solid var(--border); border-radius: 12px; }
+  .seg button { border:0; background: transparent; color: var(--text-2); font: inherit; font-weight: 700; font-size: 13px; padding: 8px 14px; border-radius: 9px; cursor: pointer; display:flex; gap:8px; align-items:center; }
+  .seg button.on { background: var(--raised); color: var(--pearl); box-shadow: 0 4px 14px rgba(0,0,0,.25); }
+  .seg button:hover:not(.on) { color: var(--pearl); }
+
+  .kpis { display:grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
+  .kpi { background: var(--panel); border:1px solid var(--border); border-radius: 16px; padding: 12px 16px; display:flex; align-items:center; gap: 12px; }
+  .kpi .dot { width: 34px; height: 34px; border-radius: 10px; display:grid; place-items:center; font-weight: 800; font-size: 13px; }
+  .kpi strong { font-size: 24px; line-height: 1.1; display:block; font-variant-numeric: tabular-nums; }
+  .kpi small { color: var(--text-2); font-size: 12px; }
+
+  .stage { flex: 1; min-height: 0; display:grid; grid-template-columns: minmax(0,1fr) 360px; gap: 16px; }
+  .canvas { position: relative; background: var(--panel); border:1px solid var(--border); border-radius: 20px; overflow: hidden; min-height: 0; }
+  .canvas .hint { position:absolute; left: 18px; top: 14px; font-size: 12px; color: var(--text-2); display:flex; gap: 14px; flex-wrap: wrap; z-index: 2; }
+  .canvas .hint span { display:inline-flex; align-items:center; gap: 6px; }
+  .canvas .hint i { width: 9px; height: 9px; border-radius: 50%; display:inline-block; }
+  .view { position:absolute; inset: 0; transition: opacity .35s ease, transform .45s cubic-bezier(.23,1,.32,1); }
+  .view.off { opacity: 0; transform: scale(.97); pointer-events: none; }
+  svg { display:block; width: 100%; height: 100%; }
+
+  /* radar */
+  .ring { fill: none; stroke: var(--border-strong); }
+  .ring.inner { fill: rgba(243,120,106,.05); }
+  .spoke { stroke: var(--border); }
+  .sector-label { fill: var(--fog); font-size: 12px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+  .sector-sub { fill: var(--text-2); font-size: 11px; }
+  .ring-label { fill: var(--text-2); font-size: 10px; font-weight: 700; letter-spacing: .08em; }
+  .sweep { fill: url(#sweep); transform-origin: center; animation: spin 7s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .pt { cursor: pointer; }
+  .pt circle.core { stroke: var(--base); stroke-width: 2; transition: r .2s; }
+  .pt:hover circle.core, .pt.sel circle.core { stroke: var(--pearl); }
+  .pt text { fill: var(--pearl); font-size: 10.5px; font-weight: 700; pointer-events: none; opacity: .85; }
+  .pt .halo { fill: none; stroke-width: 2; opacity: .0; }
+  .pt.overdue .halo { animation: pulse 1.8s ease-out infinite; }
+  @keyframes pulse { 0% { r: 8; opacity: .8; } 100% { r: 26; opacity: 0; } }
+  .link { fill: none; stroke-width: 1.4; opacity: .38; transition: opacity .2s, stroke-width .2s; }
+  .link.hot { opacity: 1; stroke-width: 2.4; }
+  .ward-node rect { fill: var(--raised); stroke: var(--border-strong); }
+  .ward-node text { fill: var(--pearl); font-size: 11px; font-weight: 700; }
+  .ward-node .free { fill: var(--mint); }
+  .noline { stroke: var(--coral); stroke-dasharray: 3 3; fill: none; }
+
+  /* match board */
+  .mb { position:absolute; inset: 40px 18px 14px; display:grid; grid-template-columns: 1fr 1.1fr 1fr; gap: 0; }
+  .col { display:flex; flex-direction: column; gap: 5px; z-index: 1; min-height: 0; }
+  .col .ward-h { font-size: 10.5px; color: var(--fog); font-weight: 800; letter-spacing: .08em; text-transform: uppercase; text-align: right; margin: 6px 2px 0; }
+  .col h3 { margin: 0 0 4px; font-size: 11px; color: var(--text-2); letter-spacing: .1em; text-transform: uppercase; }
+  .col.right h3 { text-align: right; }
+  .chipcard { display:flex; align-items:center; gap: 10px; padding: 5px 12px; border-radius: 11px; background: var(--raised); border:1px solid var(--border); cursor: pointer; transition: border-color .15s, transform .15s; min-height: 36px; }
+  .chipcard:hover, .chipcard.sel { border-color: var(--accent); transform: translateX(2px); }
+  .col.right .chipcard:hover { transform: translateX(-2px); }
+  .chipcard b { font-size: 13px; }
+  .chipcard small { color: var(--text-2); font-size: 11.5px; }
+  .chipcard .grow { flex: 1; min-width: 0; display:flex; flex-direction: row; align-items: baseline; gap: 8px; line-height: 1.25; }
+  .chipcard.stuck { border-color: rgba(243,120,106,.45); background: rgba(243,120,106,.08); }
+  .bedcard { justify-content: flex-end; text-align: right; }
+  .bedcard .grow { justify-content: flex-end; }
+  .bedcard.idle { opacity: .45; }
+  .mb-svg { position:absolute; inset: 0; pointer-events: none; }
+  .curve { fill: none; stroke-linecap: round; opacity: .55; transition: opacity .2s; }
+  .curve.hot { opacity: 1; }
+  .score-tag rect { fill: var(--base); stroke: var(--border-strong); }
+  .score-tag text { font-size: 11px; font-weight: 800; }
+
+  .pill { font-size: 10px; font-weight: 800; letter-spacing: .05em; padding: 2px 8px; border-radius: 999px; text-transform: uppercase; white-space: nowrap; }
+  .p-URGENT { background: rgba(243,120,106,.15); color: var(--coral); }
+  .p-HIGH { background: rgba(244,195,90,.15); color: var(--amber); }
+  .p-ROUTINE { background: rgba(125,180,230,.15); color: var(--accent); }
+
+  /* inspector */
+  aside { background: var(--panel); border:1px solid var(--border); border-radius: 20px; padding: 18px; display:flex; flex-direction: column; gap: 14px; min-height: 0; overflow: auto; }
+  .ins-head { display:flex; gap: 12px; align-items: center; }
+  .avatar { width: 46px; height: 46px; border-radius: 14px; display:grid; place-items:center; font-weight: 800; font-size: 15px; }
+  .ins-head h2 { margin: 0; font-size: 18px; }
+  .ins-head p { margin: 1px 0 0; color: var(--text-2); font-size: 12.5px; }
+  .facts { display:grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .facts div { background: var(--raised); border-radius: 12px; padding: 8px 11px; }
+  .facts small { display:block; color: var(--text-2); font-size: 11px; }
+  .facts b { font-size: 14px; }
+  .match { border:1px solid rgba(125,180,230,.3); background: rgba(125,180,230,.07); border-radius: 14px; padding: 12px; }
+  .match .top { display:flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .match .top b { font-size: 16px; }
+  .big-score { font-size: 22px; font-weight: 800; color: var(--mint); }
+  .bar { display:grid; grid-template-columns: 128px 1fr 40px; gap: 8px; align-items: center; font-size: 11.5px; color: var(--text-2); margin-top: 6px; }
+  .bar span.t { height: 6px; border-radius: 99px; background: rgba(238,243,246,.08); overflow: hidden; }
+  .bar span.t i { display:block; height: 100%; border-radius: 99px; background: var(--accent); }
+  .bar em { font-style: normal; text-align: right; color: var(--pearl); font-variant-numeric: tabular-nums; }
+  .blocker { border:1px solid rgba(243,120,106,.35); background: rgba(243,120,106,.08); color: var(--coral); border-radius: 14px; padding: 12px; font-size: 13px; }
+  .blocker b { display:block; color: var(--pearl); margin-bottom: 4px; }
+  .unlock { margin-top: 8px; color: var(--pearl); font-size: 12.5px; }
+  .btn { height: 42px; border-radius: 12px; border:1px solid var(--border-strong); background: var(--raised); color: var(--pearl); font: inherit; font-weight: 800; cursor: pointer; width: 100%; }
+  .btn.primary { background: var(--pearl); color: #111315; border-color: var(--pearl); box-shadow: 0 8px 24px rgba(125,180,230,.22); }
+  .btn:active { transform: scale(.98); }
+  .wait-meter { height: 8px; border-radius: 99px; background: rgba(238,243,246,.08); position: relative; overflow: visible; margin-top: 6px; }
+  .wait-meter i { position:absolute; inset: 0 auto 0 0; border-radius: 99px; }
+  .wait-meter u { position:absolute; top: -4px; bottom: -4px; width: 2px; background: var(--pearl); opacity: .6; }
+  .muted { color: var(--text-2); font-size: 12px; }
+  .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px); opacity: 0; background: var(--raised); border:1px solid var(--border-strong); padding: 10px 16px; border-radius: 12px; font-weight: 700; transition: all .3s; }
+  .toast.on { opacity: 1; transform: translateX(-50%); }
+  .badge { font-size: 10px; font-weight: 800; letter-spacing: .08em; color: var(--amber); background: rgba(244,195,90,.14); padding: 3px 8px; border-radius: 99px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Patients <span class="badge">CONCEPT</span></h1>
+      <p>City General Hospital · who needs a bed, where the pressure is, and what the AI suggests</p>
+    </div>
+    <div class="seg" role="tablist">
+      <button class="on" data-view="radar">◎ Triage Radar</button>
+      <button data-view="match">⇄ AI Match Board</button>
+    </div>
+  </header>
+
+  <section class="kpis" id="kpis"></section>
+
+  <section class="stage">
+    <div class="canvas">
+      <div class="hint">
+        <span><i style="background:var(--coral)"></i>Urgent</span>
+        <span><i style="background:var(--amber)"></i>High</span>
+        <span><i style="background:var(--accent)"></i>Routine</span>
+        <span>◌ pulsing = past wait target</span>
+        <span>— line = AI-matched ward</span>
+      </div>
+      <div class="view" id="v-radar"><svg id="radar"></svg></div>
+      <div class="view off" id="v-match">
+        <div class="mb">
+          <div class="col" id="mb-left"><h3>Waiting patients</h3></div>
+          <div></div>
+          <div class="col right" id="mb-right"><h3>Free beds</h3></div>
+        </div>
+        <svg class="mb-svg" id="mb-svg"></svg>
+      </div>
+    </div>
+    <aside id="inspector"></aside>
+  </section>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+// ---------- fictional demo data ----------
+const C = { URGENT: 'var(--coral)', HIGH: 'var(--amber)', ROUTINE: 'var(--accent)' };
+const HEX = { URGENT: '#f3786a', HIGH: '#f4c35a', ROUTINE: '#7db4e6' };
+const TARGET = { URGENT: 30, HIGH: 90, ROUTINE: 240 }; // wait targets, minutes
+const SECTORS = [
+  { key: 'ICU', label: 'ICU', ward: 'ICU', free: 4 },
+  { key: 'General', label: 'General', ward: 'Ward 1', free: 52 },
+  { key: 'Pediatric', label: 'Pediatric', ward: 'Pediatrics', free: 18 },
+  { key: 'Maternity', label: 'Maternity', ward: 'Maternity', free: 5 },
+  { key: 'Isolation', label: 'Isolation', ward: 'No isolation ward', free: 0 },
+];
+const P = [
+  { id: 'P-9003', name: 'Alex Rivera', pr: 'URGENT', type: 'ICU', needs: 'Monitor · Ventilator', wait: 48, bed: 'ICU-005', ward: 'ICU', score: 87, f: [30, 20, 20, 9, 10, 1] },
+  { id: 'P-9007', name: 'Sam Okafor', pr: 'URGENT', type: 'Isolation', needs: 'Isolation bed · Monitor', wait: 64, bed: null, blocker: 'No Isolation beds exist in active wards', unlock: 'Mark ICU-002 as Isolation Capable, or open an isolation bay in Ward 2.' },
+  { id: 'P-9001', name: 'Mira Chen', pr: 'HIGH', type: 'General', needs: 'Oxygen Outlet · Monitor', wait: 75, bed: 'W1-001', ward: 'Ward 1', score: 98, f: [30, 20, 20, 15, 10, 3] },
+  { id: 'P-9004', name: 'Leo Haddad', pr: 'HIGH', type: 'Pediatric', needs: 'Oxygen Outlet · Infusion Pump', wait: 112, bed: 'PED-002', ward: 'Pediatrics', score: 98, f: [30, 20, 20, 15, 10, 3] },
+  { id: 'P-9009', name: 'Nia Brooks', pr: 'HIGH', type: 'ICU', needs: 'Isolation Capable · Monitor', wait: 40, bed: 'ICU-002', ward: 'ICU', score: 83, f: [30, 20, 20, 2, 10, 1] },
+  { id: 'P-9006', name: 'Theo Marsh', pr: 'ROUTINE', type: 'General', needs: 'General', wait: 130, bed: 'W1-096', ward: 'Ward 1', score: 96, f: [30, 20, 20, 13, 10, 3] },
+  { id: 'P-9002', name: 'Ivy Laurent', pr: 'ROUTINE', type: 'General', needs: 'Monitor', wait: 260, bed: 'W2-014', ward: 'Ward 2', score: 91, f: [30, 20, 12, 15, 10, 2] },
+  { id: 'P-9005', name: 'Omar Said', pr: 'ROUTINE', type: 'Maternity', needs: 'Maternity', wait: 55, bed: 'MAT-007', ward: 'Maternity', score: 97, f: [30, 20, 20, 15, 10, 2] },
+  { id: 'P-9008', name: 'Rosa Diaz', pr: 'ROUTINE', type: 'Pediatric', needs: 'Infusion Pump', wait: 95, bed: 'PED-011', ward: 'Pediatrics', score: 97, f: [30, 20, 20, 15, 10, 3] },
+  { id: 'P-9010', name: 'Kai Tanaka', pr: 'ROUTINE', type: 'General', needs: 'Suction', wait: 180, bed: 'W1-044', ward: 'Ward 1', score: 98, f: [30, 20, 20, 15, 10, 3] },
+  { id: 'P-9011', name: 'Ella Novak', pr: 'ROUTINE', type: 'Maternity', needs: 'Monitor', wait: 300, bed: 'MAT-010', ward: 'Maternity', score: 89, f: [30, 20, 12, 15, 10, 2] },
+  { id: 'P-9012', name: 'Jon Weller', pr: 'HIGH', type: 'General', needs: 'Bariatric', wait: 20, bed: 'W2-031', ward: 'Ward 2', score: 92, f: [30, 20, 20, 15, 4, 3] },
+];
+const FACTORS = [['Bed type', 30], ['Bed features', 20], ['Equipment ready', 20], ['Keeps scarce beds free', 15], ['Ward suits care', 10], ['Balances ward load', 5]];
+const overdue = (p) => p.wait > TARGET[p.pr];
+const fmt = (m) => m >= 60 ? `${Math.floor(m / 60)} h ${m % 60 ? (m % 60) + ' m' : ''}`.trim() : `${m} min`;
+let sel = 'P-9003';
+
+// ---------- KPIs ----------
+const k = [
+  ['Waiting', P.length, 'var(--pearl)', 'rgba(238,243,246,.08)', '◷'],
+  ['Urgent', P.filter(p => p.pr === 'URGENT').length, 'var(--coral)', 'rgba(243,120,106,.14)', '!'],
+  ['Past wait target', P.filter(overdue).length, 'var(--amber)', 'rgba(244,195,90,.14)', '◌'],
+  ['AI can place now', P.filter(p => p.bed).length, 'var(--mint)', 'rgba(94,211,165,.14)', '✓'],
+  ['Avg match', Math.round(P.filter(p => p.bed).reduce((a, p) => a + p.score, 0) / P.filter(p => p.bed).length) + '%', 'var(--accent)', 'rgba(125,180,230,.14)', '✦'],
+];
+document.getElementById('kpis').innerHTML = k.map(([l, v, c, bg, ic]) =>
+  `<div class="kpi"><span class="dot" style="color:${c};background:${bg}">${ic}</span><div><strong>${v}</strong><small>${l}</small></div></div>`).join('');
+
+// ---------- Triage Radar ----------
+const NS = 'http://www.w3.org/2000/svg';
+const el = (t, a = {}, p) => { const e = document.createElementNS(NS, t); for (const k in a) e.setAttribute(k, a[k]); if (p) p.appendChild(e); return e; };
+function hash(s) { let h = 7; for (const c of s) h = (h * 31 + c.charCodeAt(0)) % 9973; return h / 9973; }
+
+function drawRadar() {
+  const svg = document.getElementById('radar');
+  const W = svg.clientWidth || 900, H = svg.clientHeight || 600;
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`); svg.innerHTML = '';
+  const cx = W / 2, cy = H / 2 + 16, R = Math.min(W, H) / 2 - 70;
+  const rings = { URGENT: [0.12, 0.38], HIGH: [0.38, 0.68], ROUTINE: [0.68, 1] };
+  const defs = el('defs', {}, svg);
+  const g = el('radialGradient', { id: 'sweep', cx: '50%', cy: '50%', r: '50%' }, defs);
+  el('stop', { offset: '0%', 'stop-color': '#7db4e6', 'stop-opacity': '.0' }, g);
+  el('stop', { offset: '100%', 'stop-color': '#7db4e6', 'stop-opacity': '.12' }, g);
+
+  [1, .68, .38].forEach((f, i) => el('circle', { cx, cy, r: R * f, class: 'ring' + (i === 2 ? ' inner' : '') }, svg));
+  el('circle', { cx, cy, r: R * .12, fill: 'rgba(243,120,106,.18)', stroke: 'rgba(243,120,106,.5)' }, svg);
+  const c = el('text', { x: cx, y: cy + 4, 'text-anchor': 'middle', class: 'ring-label', fill: '#f3786a' }, svg); c.textContent = 'NOW';
+  [['URGENT', .25], ['HIGH', .53], ['ROUTINE', .84]].forEach(([t, f]) => {
+    const tx = el('text', { x: cx + 6, y: cy - R * f + 3, class: 'ring-label' }, svg); tx.textContent = t;
+  });
+  // sweep wedge
+  const sw = el('path', { d: `M${cx},${cy} L${cx + R},${cy} A${R},${R} 0 0,0 ${cx + R * Math.cos(-0.6)},${cy + R * Math.sin(-0.6)} Z`, class: 'sweep', style: `transform-origin:${cx}px ${cy}px` }, svg);
+
+  const n = SECTORS.length, step = (Math.PI * 2) / n, start = -Math.PI / 2 - step / 2;
+  const wardPos = {};
+  SECTORS.forEach((s, i) => {
+    const a0 = start + i * step;
+    el('line', { x1: cx, y1: cy, x2: cx + R * Math.cos(a0), y2: cy + R * Math.sin(a0), class: 'spoke' }, svg);
+    const am = a0 + step / 2;
+    const lx = cx + (R + 34) * Math.cos(am), ly = cy + (R + 34) * Math.sin(am);
+    const g = el('g', { class: 'ward-node' }, svg);
+    const w = 118;
+    el('rect', { x: lx - w / 2, y: ly - 18, width: w, height: 36, rx: 10 }, g);
+    const t1 = el('text', { x: lx, y: ly - 3, 'text-anchor': 'middle', class: 'sector-label' }, g); t1.textContent = s.label;
+    const t2 = el('text', { x: lx, y: ly + 11, 'text-anchor': 'middle', class: 'sector-sub ' + (s.free ? 'free' : '') , fill: s.free ? '#5ed3a5' : '#f3786a' }, g);
+    t2.textContent = s.free ? `${s.free} beds free` : 'no beds';
+    wardPos[s.key] = { x: lx, y: ly + (Math.sin(am) > 0 ? -18 : 18) };
+    s.a0 = a0;
+  });
+
+  const linkLayer = el('g', {}, svg), dotLayer = el('g', {}, svg);
+  P.forEach((p) => {
+    const s = SECTORS.find((x) => x.key === p.type);
+    const [r0, r1] = rings[p.pr];
+    // longer wait → closer to the centre within its ring ("drifting toward NOW")
+    const pressure = Math.min(1, p.wait / (TARGET[p.pr] * 1.6));
+    const rr = R * (r1 - (r1 - r0) * (0.15 + 0.7 * pressure));
+    const peers = P.filter((q) => q.type === p.type), k = peers.indexOf(p);
+    const a = s.a0 + step * (peers.length === 1 ? .5 : 0.14 + 0.72 * (k / (peers.length - 1)));
+    const x = cx + rr * Math.cos(a), y = cy + rr * Math.sin(a);
+    p._x = x; p._y = y;
+    const wp = wardPos[p.type];
+    if (p.bed) {
+      const mx = (x + wp.x) / 2 + (cy - y) * .12, my = (y + wp.y) / 2 + (x - cx) * .12;
+      p._link = el('path', { d: `M${x},${y} Q${mx},${my} ${wp.x},${wp.y}`, class: 'link', stroke: HEX[p.pr] }, linkLayer);
+    }
+    const gp = el('g', { class: 'pt' + (overdue(p) ? ' overdue' : '') + (p.id === sel ? ' sel' : ''), tabindex: 0 }, dotLayer);
+    const size = 7 + Math.min(7, p.wait / 45);
+    el('circle', { cx: x, cy: y, r: 8, class: 'halo', stroke: HEX[p.pr] }, gp);
+    if (!p.bed) el('circle', { cx: x, cy: y, r: size + 6, class: 'noline' }, gp);
+    el('circle', { cx: x, cy: y, r: size, class: 'core', fill: HEX[p.pr] }, gp);
+    const t = el('text', { x: x + size + 5, y: y + 4 }, gp); t.textContent = p.id.replace('P-', '');
+    const title = el('title', {}, gp); title.textContent = `${p.id} · ${p.pr} · ${p.type} · waiting ${fmt(p.wait)}`;
+    gp.addEventListener('click', () => select(p.id));
+    gp.addEventListener('mouseenter', () => p._link && p._link.classList.add('hot'));
+    gp.addEventListener('mouseleave', () => p._link && p.id !== sel && p._link.classList.remove('hot'));
+    p._g = gp;
+  });
+  highlight();
+}
+
+// ---------- AI Match Board ----------
+function drawMatch() {
+  const L = document.getElementById('mb-left'), Rt = document.getElementById('mb-right');
+  L.innerHTML = '<h3>Waiting patients</h3>'; Rt.innerHTML = '<h3>Free beds (AI matched)</h3>';
+  const order = { URGENT: 0, HIGH: 1, ROUTINE: 2 };
+  const list = [...P].sort((a, b) => order[a.pr] - order[b.pr] || b.wait - a.wait);
+  list.forEach((p) => {
+    const d = document.createElement('div');
+    d.className = 'chipcard' + (p.bed ? '' : ' stuck') + (p.id === sel ? ' sel' : '');
+    d.dataset.id = p.id;
+    d.innerHTML = `<span class="pill p-${p.pr}">${p.pr}</span><span class="grow"><b>${p.id}</b><small>${p.type} · ${fmt(p.wait)}</small></span>${p.bed ? '' : '<small style="color:var(--coral)">no bed</small>'}`;
+    d.onclick = () => select(p.id); L.appendChild(d);
+  });
+  ['ICU', 'Ward 1', 'Ward 2', 'Pediatrics', 'Maternity'].forEach((w) => {
+    const beds = list.filter((p) => p.bed && p.ward === w);
+    if (!beds.length) return;
+    const h = document.createElement('div'); h.className = 'ward-h'; h.textContent = w; Rt.appendChild(h);
+    beds.forEach((p) => {
+      const d = document.createElement('div');
+      d.className = 'chipcard bedcard'; d.dataset.bed = p.bed;
+      d.innerHTML = `<span class="grow"><small>free</small><b>${p.bed}</b></span>`;
+      d.onclick = () => select(p.id); Rt.appendChild(d);
+    });
+  });
+  requestAnimationFrame(drawCurves);
+}
+function drawCurves() {
+  const svg = document.getElementById('mb-svg'), box = svg.getBoundingClientRect();
+  svg.setAttribute('viewBox', `0 0 ${box.width} ${box.height}`); svg.innerHTML = '';
+  P.filter((p) => p.bed).forEach((p) => {
+    const a = document.querySelector(`#mb-left [data-id="${p.id}"]`), b = document.querySelector(`#mb-right [data-bed="${p.bed}"]`);
+    if (!a || !b) return;
+    const ra = a.getBoundingClientRect(), rb = b.getBoundingClientRect();
+    const x1 = ra.right - box.left, y1 = ra.top + ra.height / 2 - box.top, x2 = rb.left - box.left, y2 = rb.top + rb.height / 2 - box.top;
+    const dx = (x2 - x1) * .5;
+    const path = el('path', { d: `M${x1},${y1} C${x1 + dx},${y1} ${x2 - dx},${y2} ${x2},${y2}`, class: 'curve' + (p.id === sel ? ' hot' : ''), stroke: HEX[p.pr], 'stroke-width': 1 + (p.score - 75) / 6 }, svg);
+    const mx = x2 - 30, my = y2;
+    const tg = el('g', { class: 'score-tag' }, svg);
+    el('rect', { x: mx - 20, y: my - 10, width: 40, height: 20, rx: 10 }, tg);
+    const t = el('text', { x: mx, y: my + 4, 'text-anchor': 'middle', fill: p.score >= 85 ? '#5ed3a5' : '#7db4e6' }, tg); t.textContent = p.score + '%';
+  });
+}
+
+// ---------- inspector ----------
+function select(id) { sel = id; highlight(); renderInspector(); }
+function highlight() {
+  P.forEach((p) => { p._g && p._g.classList.toggle('sel', p.id === sel); p._link && p._link.classList.toggle('hot', p.id === sel); });
+  document.querySelectorAll('#mb-left .chipcard').forEach((d) => d.classList.toggle('sel', d.dataset.id === sel));
+  document.querySelectorAll('.curve').forEach((c) => c.classList.remove('hot'));
+  if (!document.getElementById('v-match').classList.contains('off')) drawCurves();
+}
+function renderInspector() {
+  const p = P.find((x) => x.id === sel), t = TARGET[p.pr], pctW = Math.min(100, (p.wait / (t * 2)) * 100);
+  const col = overdue(p) ? 'var(--coral)' : p.wait > t * .7 ? 'var(--amber)' : 'var(--mint)';
+  document.getElementById('inspector').innerHTML = `
+    <div class="ins-head"><span class="avatar" style="background:${HEX[p.pr]}22;color:${HEX[p.pr]}">${p.id.slice(-2)}</span>
+      <div><h2>${p.id} <span class="pill p-${p.pr}">${p.pr}</span></h2><p>${p.name} · fictional patient</p></div></div>
+    <div class="facts">
+      <div><small>Bed type</small><b>${p.type}</b></div>
+      <div><small>Needs</small><b style="font-size:12.5px">${p.needs}</b></div>
+    </div>
+    <div><div style="display:flex;justify-content:space-between"><span class="muted">Waiting</span><b style="color:${col}">${fmt(p.wait)}</b></div>
+      <div class="wait-meter"><i style="width:${pctW}%;background:${col}"></i><u style="left:50%"></u></div>
+      <div class="muted" style="margin-top:6px">Target for ${p.pr.toLowerCase()}: ${fmt(t)}${overdue(p) ? ' · <b style="color:var(--coral)">overdue</b>' : ''}</div></div>
+    ${p.bed ? `
+    <div class="match"><div class="top"><div><span class="muted">AI recommended bed</span><br><b>${p.bed}</b> <span class="muted">· ${p.ward}</span></div><span class="big-score">${p.score}%</span></div>
+      ${FACTORS.map(([l, m], i) => `<div class="bar"><span>${l}</span><span class="t"><i style="width:${(p.f[i] / m) * 100}%"></i></span><em>${p.f[i]}/${m}</em></div>`).join('')}
+    </div>
+    <button class="btn primary" onclick="toast('${p.id} allocated to ${p.bed} (demo)')">Allocate ${p.bed}</button>
+    <button class="btn" onclick="toast('Showing other beds for ${p.id} (demo)')">See alternatives</button>` : `
+    <div class="blocker"><b>No bed fits right now</b>${p.blocker}<div class="unlock">✦ AI unlock: ${p.unlock}</div></div>
+    <button class="btn primary" onclick="toast('Unlock suggestion applied (demo)')">Apply unlock suggestion</button>`}
+    <p class="muted">Rule-based resource match, not a clinical assessment. Staff confirm every allocation.</p>`;
+}
+function toast(m) { const t = document.getElementById('toast'); t.textContent = m; t.classList.add('on'); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove('on'), 2200); }
+
+// ---------- view toggle ----------
+document.querySelectorAll('.seg button').forEach((b) => b.onclick = () => {
+  document.querySelectorAll('.seg button').forEach((x) => x.classList.toggle('on', x === b));
+  const m = b.dataset.view === 'match';
+  document.getElementById('v-radar').classList.toggle('off', m);
+  document.getElementById('v-match').classList.toggle('off', !m);
+  if (m) drawMatch();
+});
+addEventListener('resize', () => { drawRadar(); if (!document.getElementById('v-match').classList.contains('off')) drawCurves(); });
+drawRadar(); renderInspector();
+</script>
+</body>
+</html>

@@ -1,0 +1,333 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>MediTwin · Patients concept — Bed Passes at scale</title>
+<style>
+  :root {
+    --base:#111315; --panel:#1b1f23; --raised:#2c3238; --slate:#4f6e85; --fog:#8da4b3; --pearl:#eef3f6;
+    --accent:#7db4e6; --mint:#5ed3a5; --coral:#f3786a; --amber:#f4c35a;
+    --border:rgba(238,243,246,.09); --border-strong:rgba(238,243,246,.16); --text-2:#9aabb8;
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  body { margin:0; background: radial-gradient(1200px 700px at 70% -10%, rgba(125,180,230,.10), transparent 60%), var(--base);
+    color: var(--pearl); font: 14px/1.45 Manrope, "Segoe UI", system-ui, sans-serif; }
+  .wrap { max-width: 1480px; margin: 0 auto; padding: 20px 24px; display: grid; grid-template-columns: minmax(0,1fr) 370px; gap: 18px; height: 100vh; }
+  main { display:flex; flex-direction: column; gap: 14px; min-width: 0; min-height: 0; }
+  header { display:flex; align-items:center; justify-content:space-between; gap: 16px; }
+  h1 { margin:0; font-size: 21px; }
+  header p { margin: 2px 0 0; color: var(--text-2); font-size: 13px; }
+  .badge { font-size: 10px; font-weight: 800; letter-spacing: .08em; color: var(--amber); background: rgba(244,195,90,.14); padding: 3px 8px; border-radius: 99px; vertical-align: 3px; }
+  .tools { display:flex; gap: 8px; align-items: center; }
+  .search { height: 36px; width: 220px; border-radius: 10px; border: 1px solid var(--border); background: var(--panel); color: var(--pearl); font: inherit; font-size: 13px; padding: 0 12px; }
+  .search:focus { outline: none; border-color: var(--accent); }
+  .seg { display:flex; padding: 3px; gap: 3px; background: var(--panel); border:1px solid var(--border); border-radius: 11px; }
+  .seg button { border:0; background: transparent; color: var(--text-2); font: inherit; font-weight: 700; font-size: 12.5px; padding: 6px 12px; border-radius: 8px; cursor: pointer; }
+  .seg button.on { background: var(--raised); color: var(--pearl); }
+
+  /* ---------- overview: urgency × care heat grid ---------- */
+  .top { display:grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 14px; }
+  .card { background: var(--panel); border:1px solid var(--border); border-radius: 16px; padding: 12px 14px; }
+  .card h3 { margin: 0 0 8px; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--text-2); display:flex; justify-content: space-between; }
+  .card h3 button { background: none; border: 0; color: var(--accent); font: inherit; font-size: 11px; cursor: pointer; letter-spacing: .04em; }
+  .heat { display:grid; grid-template-columns: 74px repeat(5, 1fr) 54px; gap: 6px; font-size: 12px; }
+  .heat .h { color: var(--fog); font-size: 10.5px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; display:flex; align-items:center; }
+  .heat .h.c { justify-content: center; }
+  .heat .cell { --rgb: 125,180,230; position: relative; height: 46px; border-radius: 10px; display:flex; flex-direction: column; align-items:center; justify-content:center; gap: 3px; cursor: pointer; overflow: hidden;
+    background: linear-gradient(180deg, rgba(var(--rgb), calc(.06 + var(--k) * .22)), rgba(var(--rgb), .03)), var(--raised);
+    border: 1px solid rgba(var(--rgb), calc(.18 + var(--k) * .5));
+    box-shadow: 0 0 calc(var(--k) * 18px) rgba(var(--rgb), calc(var(--k) * .35)), inset 0 1px 0 rgba(255,255,255,.05);
+    transition: transform .15s cubic-bezier(.23,1,.32,1), box-shadow .2s; }
+  .heat .cell:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(var(--rgb), .35), inset 0 1px 0 rgba(255,255,255,.06); }
+  .heat .cell.on { border-color: var(--pearl); box-shadow: 0 0 0 2px rgba(238,243,246,.25), 0 6px 20px rgba(var(--rgb), .35); }
+  .heat .cell b { font-size: 17px; line-height: 1; font-weight: 800; color: var(--pearl); font-variant-numeric: tabular-nums; }
+  .heat .cell .x { display:flex; align-items:center; gap: 4px; font-size: 10px; font-weight: 700; color: var(--fog); letter-spacing: .02em; line-height: 1; }
+  .heat .cell .x::before { content:''; width: 5px; height: 5px; border-radius: 50%; background: var(--coral); box-shadow: 0 0 6px rgba(243,120,106,.9); }
+  .heat .cell .fill { position:absolute; left: 0; bottom: 0; height: 3px; border-radius: 0 3px 0 0; background: rgb(var(--rgb)); box-shadow: 0 0 8px rgba(var(--rgb), .8); }
+  .heat .cell.zero { cursor: default; background: transparent; border: 1px dashed rgba(238,243,246,.1); box-shadow: none; color: rgba(238,243,246,.22); font-size: 13px; font-weight: 700; }
+  .heat .cell.zero:hover { transform: none; }
+  .heat .tot { display:flex; align-items:center; justify-content:center; font-weight: 800; font-size: 15px; color: var(--pearl); }
+  .kp { display:grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .kp div { background: var(--raised); border-radius: 12px; padding: 8px 12px; }
+  .kp strong { font-size: 22px; display:block; line-height: 1.15; font-variant-numeric: tabular-nums; }
+  .kp small { color: var(--text-2); font-size: 11.5px; }
+  .kp .c strong { color: var(--coral); } .kp .a strong { color: var(--amber); } .kp .m strong { color: var(--mint); }
+
+  /* ---------- list ---------- */
+  .list { flex: 1; min-height: 0; overflow: auto; background: var(--panel); border:1px solid var(--border); border-radius: 16px; padding: 4px 10px 10px; }
+  .lane { margin-top: 6px; }
+  .lane-h { position: sticky; top: 0; z-index: 2; display:flex; align-items:center; gap: 10px; padding: 9px 4px; background: var(--panel); cursor: pointer; user-select: none; }
+  .lane-h .chev { width: 18px; color: var(--text-2); transition: transform .2s; }
+  .lane.closed .chev { transform: rotate(-90deg); }
+  .lane.closed .rows { display: none; }
+  .lane-h h2 { margin: 0; font-size: 12.5px; letter-spacing: .1em; text-transform: uppercase; }
+  .lane-h .n { font-size: 11px; font-weight: 800; padding: 1px 8px; border-radius: 99px; }
+  .lane-h small { color: var(--text-2); font-size: 12px; }
+  .lane-h .sp { flex: 1; }
+  .bulk { height: 28px; padding: 0 12px; border-radius: 8px; border: 1px solid var(--border-strong); background: var(--raised); color: var(--pearl); font: inherit; font-size: 12px; font-weight: 800; cursor: pointer; }
+  .bulk:hover { border-color: var(--mint); color: var(--mint); }
+
+  .row { --c: var(--accent); --rgb: 125,180,230; display:grid; grid-template-columns: 4px 120px 92px minmax(120px, 1fr) 150px 92px 62px 88px; align-items: center; gap: 12px;
+    height: 42px; padding: 0 10px 0 0; border-radius: 10px; cursor: pointer; transition: background .12s; }
+  .row:hover { background: rgba(238,243,246,.035); }
+  .row.sel { background: rgba(var(--rgb), .10); }
+  .row + .row { box-shadow: inset 0 1px 0 var(--border); }
+  .row.URGENT { --c: var(--coral); --rgb: 243,120,106; } .row.HIGH { --c: var(--amber); --rgb: 244,195,90; }
+  .row .edge { height: 26px; border-radius: 0 4px 4px 0; background: var(--c); }
+  .row .who b { display:block; font-size: 13px; } .row .who small { color: var(--text-2); font-size: 11px; }
+  .row .care { font-size: 12.5px; font-weight: 700; }
+  .row .needs { color: var(--text-2); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .wbar { display:flex; flex-direction: column; gap: 3px; }
+  .wbar small { font-size: 11px; font-variant-numeric: tabular-nums; color: var(--text-2); }
+  .wbar small b { color: var(--pearl); } .wbar.late small b { color: var(--coral); }
+  .wbar span { height: 4px; border-radius: 4px; background: rgba(238,243,246,.08); position: relative; overflow: hidden; }
+  .wbar span i { position:absolute; inset: 0 auto 0 0; border-radius: 4px; background: var(--c); }
+  .wbar.late span i { background: var(--coral); }
+  .bed b { font-size: 13px; letter-spacing: .02em; } .bed small { display:block; color: var(--text-2); font-size: 11px; }
+  .bed.none b { color: var(--coral); font-size: 12px; }
+  .score { justify-self: start; min-width: 46px; text-align: center; padding: 2px 8px; border-radius: 99px; font-size: 12px; font-weight: 800; background: rgba(94,211,165,.14); color: var(--mint); }
+  .score.mid { background: rgba(125,180,230,.14); color: var(--accent); }
+  .go { height: 28px; border-radius: 8px; border: 0; background: var(--pearl); color: var(--base); font: inherit; font-size: 12px; font-weight: 800; cursor: pointer; }
+  .go.ghost { background: rgba(243,120,106,.16); color: var(--coral); }
+  .go:active { transform: scale(.96); }
+  .row.done { opacity: .38; pointer-events: none; }
+  .row.done .go { background: var(--mint); }
+  .more { display:block; width: 100%; margin-top: 6px; height: 32px; border-radius: 9px; border: 1px dashed var(--border-strong); background: transparent; color: var(--accent); font: inherit; font-size: 12.5px; font-weight: 700; cursor: pointer; }
+
+  /* ---------- bed pass (side + passes view) ---------- */
+  .pass { --c: var(--accent); --rgb: 125,180,230; position: relative; display:grid; grid-template-columns: 1fr 104px; min-height: 140px;
+    border-radius: 18px; background: linear-gradient(135deg, rgba(var(--rgb), .12), transparent 50%), var(--raised); border: 1px solid var(--border); cursor: pointer; }
+  .pass.URGENT { --c: var(--coral); --rgb: 243,120,106; } .pass.HIGH { --c: var(--amber); --rgb: 244,195,90; }
+  .pass::before { content:''; position:absolute; left: 0; top: 16px; bottom: 16px; width: 4px; border-radius: 0 4px 4px 0; background: var(--c); }
+  .pass.done { opacity: .4; }
+  .pm { padding: 13px 14px 13px 18px; display:flex; flex-direction: column; gap: 9px; min-width: 0; }
+  .p-top { display:flex; justify-content: space-between; align-items: flex-start; gap: 6px; }
+  .p-id { font-size: 18px; font-weight: 800; line-height: 1.1; } .p-name { color: var(--text-2); font-size: 12px; }
+  .prio { font-size: 10px; font-weight: 800; letter-spacing: .06em; padding: 3px 9px; border-radius: 99px; background: rgba(var(--rgb), .16); color: var(--c); white-space: nowrap; }
+  .route { display:grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 9px; }
+  .lbl { display:block; font-size: 9.5px; font-weight: 800; letter-spacing: .12em; color: var(--text-2); }
+  .route b { font-size: 14px; } .route .to { text-align: right; }
+  .track { position: relative; height: 2px; background: repeating-linear-gradient(90deg, var(--border-strong) 0 6px, transparent 6px 11px); }
+  .track i { position:absolute; left: 0; top: -1px; height: 4px; border-radius: 4px; background: var(--c); }
+  .meta { display:flex; gap: 12px; flex-wrap: wrap; }
+  .meta small { display:block; font-size: 9.5px; font-weight: 800; letter-spacing: .1em; color: var(--text-2); } .meta b { font-size: 12px; }
+  .late { color: var(--coral); }
+  .stub { position: relative; border-left: 2px dashed var(--border-strong); padding: 12px 10px; display:flex; flex-direction: column; align-items: center; justify-content: space-between; gap: 5px; text-align: center; }
+  .stub::before, .stub::after { content:''; position:absolute; left: -11px; width: 20px; height: 20px; border-radius: 50%; background: var(--panel); }
+  .stub::before { top: -11px; } .stub::after { bottom: -11px; }
+  .stub .bedc { font-size: 15px; font-weight: 800; }
+  .stub .go { width: 100%; }
+  .nobed { font-size: 12px; font-weight: 800; color: var(--coral); }
+  .ring { width: 50px; height: 50px; } .ring circle { fill: none; stroke-width: 5; } .ring .bg { stroke: rgba(238,243,246,.08); }
+  .ring .fg { stroke-linecap: round; transform: rotate(-90deg); transform-origin: center; } .ring text { fill: var(--pearl); font-size: 15px; font-weight: 800; }
+  .pgrid { display:grid; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap: 12px; padding: 4px 0 10px; }
+  .pgrid .stub::before, .pgrid .stub::after { background: var(--panel); }
+
+  aside { background: var(--panel); border:1px solid var(--border); border-radius: 20px; padding: 16px; display:flex; flex-direction: column; gap: 13px; min-height: 0; overflow: auto; }
+  aside h3 { margin: 0; font-size: 11px; letter-spacing: .1em; color: var(--text-2); text-transform: uppercase; }
+  aside .stub::before, aside .stub::after { background: var(--panel); }
+  .bar { display:grid; grid-template-columns: 130px 1fr 38px; gap: 8px; align-items: center; font-size: 11.5px; color: var(--text-2); margin-top: 7px; }
+  .bar span.t { height: 6px; border-radius: 99px; background: rgba(238,243,246,.08); overflow: hidden; }
+  .bar span.t i { display:block; height: 100%; border-radius: 99px; background: var(--accent); }
+  .bar em { font-style: normal; text-align: right; color: var(--pearl); }
+  .box { border:1px solid var(--border); background: var(--raised); border-radius: 14px; padding: 12px; }
+  .box.red { border-color: rgba(243,120,106,.35); background: rgba(243,120,106,.08); color: var(--coral); }
+  .box.red b { color: var(--pearl); display:block; margin-bottom: 4px; }
+  .muted { color: var(--text-2); font-size: 12px; margin: 0; }
+  .empty { padding: 30px; text-align: center; color: var(--text-2); }
+  .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px); opacity: 0; background: var(--raised); border:1px solid var(--border-strong); padding: 10px 16px; border-radius: 12px; font-weight: 700; transition: all .3s; }
+  .toast.on { opacity: 1; transform: translateX(-50%); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <main>
+    <header>
+      <div>
+        <h1>Patients <span class="badge">CONCEPT · 60 FICTIONAL PATIENTS</span></h1>
+        <p>City General Hospital · see the whole queue at a glance, then act row by row</p>
+      </div>
+      <div class="tools">
+        <input class="search" id="q" placeholder="Search patient, bed, need…" />
+        <div class="seg"><button class="on" data-v="rows">☰ Compact</button><button data-v="passes">▦ Passes</button></div>
+      </div>
+    </header>
+
+    <section class="top">
+      <div class="card"><h3><span>Queue map · urgency × care type</span><button id="clear" hidden>Clear filter ✕</button></h3><div class="heat" id="heat"></div></div>
+      <div class="card"><h3><span>Right now</span></h3><div class="kp" id="kp"></div></div>
+    </section>
+
+    <section class="list" id="list"></section>
+  </main>
+  <aside id="side"></aside>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+// ---------- fictional data: 12 named + 48 generated ----------
+const TARGET = { URGENT: 30, HIGH: 90, ROUTINE: 240 };
+const RGB = { URGENT: '243,120,106', HIGH: '244,195,90', ROUTINE: '125,180,230' };
+const TYPES = ['ICU', 'General', 'Pediatric', 'Maternity', 'Isolation'];
+const WARD = { ICU: ['ICU', 'ICU'], General: ['Ward 1', 'W1'], Pediatric: ['Pediatrics', 'PED'], Maternity: ['Maternity', 'MAT'], Isolation: [null, null] };
+const NEEDS = { ICU: ['Monitor · Ventilator', 'Monitor', 'Ventilator · Suction'], General: ['Oxygen · Monitor', 'None', 'Suction', 'Bariatric', 'Monitor'],
+  Pediatric: ['Infusion Pump', 'Oxygen · Infusion Pump', 'None'], Maternity: ['Monitor', 'None'], Isolation: ['Isolation · Monitor', 'Isolation'] };
+const FIRST = ['Alex','Sam','Mira','Leo','Nia','Jon','Ella','Ivy','Kai','Theo','Rosa','Omar','Zara','Finn','Lena','Arjun','Maya','Noah','Aisha','Ravi','Clara','Yusuf','Iris','Dev'];
+const LAST = ['Rivera','Okafor','Chen','Haddad','Brooks','Weller','Novak','Laurent','Tanaka','Marsh','Diaz','Said','Khan','Moreau','Patel','Silva','Berg','Ito','Mensah','Rossi'];
+let seed = 42; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+const pick = (a) => a[Math.floor(rnd() * a.length)];
+const P = [];
+for (let i = 0; i < 60; i++) {
+  const r = rnd(), pr = r < .25 ? 'URGENT' : r < .55 ? 'HIGH' : 'ROUTINE';
+  const t = rnd(), type = t < .22 ? 'ICU' : t < .62 ? 'General' : t < .78 ? 'Pediatric' : t < .92 ? 'Maternity' : 'Isolation';
+  const wait = Math.round(5 + rnd() * TARGET[pr] * 1.8);
+  const [ward, pre] = WARD[type];
+  const blocked = !ward || (type === 'ICU' && rnd() < .3);
+  const score = Math.round(78 + rnd() * 21);
+  P.push({ id: `P-${9001 + i}`, name: `${pick(FIRST)} ${pick(LAST)}`, pr, type, needs: pick(NEEDS[type]), wait,
+    bed: blocked ? null : `${pre}-${String(Math.floor(1 + rnd() * 90)).padStart(3, '0')}`, ward: blocked ? null : ward, score,
+    blocker: !ward ? 'No Isolation beds exist in active wards' : 'All ICU beds with a free ventilator are taken',
+    unlock: !ward ? 'Mark ICU-002 as Isolation Capable, or open an isolation bay in Ward 2.' : 'ICU-014 finishes cleaning in ~20 min — reserve it.',
+    f: [30, 20, score > 90 ? 20 : 12, Math.min(15, score - 70), 10, 3] });
+}
+const FACTORS = [['Bed type', 30], ['Bed features', 20], ['Equipment ready', 20], ['Keeps scarce beds free', 15], ['Ward suits care', 10], ['Balances ward load', 5]];
+const LANES = [['URGENT', 'Urgent', 'target 30 min'], ['HIGH', 'High', 'target 90 min'], ['ROUTINE', 'Routine', 'target 4 h']];
+const fmt = (m) => m >= 60 ? `${Math.floor(m / 60)} h${m % 60 ? ' ' + (m % 60) + 'm' : ''}` : `${m} min`;
+const late = (p) => p.wait > TARGET[p.pr];
+const done = new Set();
+let view = 'rows', cellF = null, q = '', sel = null;
+const closed = new Set(['ROUTINE']);
+const expanded = new Set();
+const ROW_LIMIT = 12, PASS_LIMIT = 6;
+
+const visible = () => P.filter((p) => (!cellF || (p.pr === cellF[0] && p.type === cellF[1]))
+  && (!q || `${p.id} ${p.name} ${p.type} ${p.needs} ${p.bed ?? ''} ${p.ward ?? ''}`.toLowerCase().includes(q)));
+const waitingOrder = (a, b) => (late(b) - late(a)) || (b.wait / TARGET[b.pr]) - (a.wait / TARGET[a.pr]);
+
+function heat() {
+  const left = P.filter((p) => !done.has(p.id));
+  const max = Math.max(...LANES.flatMap(([k]) => TYPES.map((t) => left.filter((p) => p.pr === k && p.type === t).length)));
+  let h = '<div></div>' + TYPES.map((t) => `<div class="h c">${t}</div>`).join('') + '<div class="h c">All</div>';
+  LANES.forEach(([k, label]) => {
+    h += `<div class="h" style="color:rgb(${RGB[k]})">${label}</div>`;
+    TYPES.forEach((t) => {
+      const ps = left.filter((p) => p.pr === k && p.type === t), n = ps.length, lt = ps.filter(late).length;
+      const on = cellF && cellF[0] === k && cellF[1] === t;
+      h += n ? `<div class="cell${on ? ' on' : ''}" data-k="${k}" data-t="${t}" title="${n} ${label.toLowerCase()} · ${t}${lt ? ` · ${lt} past target` : ''}"
+        style="--rgb:${RGB[k]};--k:${(n / max).toFixed(2)}"><b>${n}</b>${lt ? `<span class="x">${lt} late</span>` : ''}<i class="fill" style="width:${(n / max) * 100}%"></i></div>`
+        : '<div class="cell zero">0</div>';
+    });
+    h += `<div class="tot">${left.filter((p) => p.pr === k).length}</div>`;
+  });
+  document.getElementById('heat').innerHTML = h;
+  document.querySelectorAll('.heat .cell[data-k]').forEach((c) => c.onclick = () => {
+    cellF = cellF && cellF[0] === c.dataset.k && cellF[1] === c.dataset.t ? null : [c.dataset.k, c.dataset.t];
+    if (cellF) closed.delete(cellF[0]);
+    render();
+  });
+  document.getElementById('clear').hidden = !cellF;
+}
+
+function kp() {
+  const left = P.filter((p) => !done.has(p.id)), ready = left.filter((p) => p.bed);
+  document.getElementById('kp').innerHTML = [
+    ['', left.length, 'waiting for a bed'], ['c', left.filter((p) => p.pr === 'URGENT').length, 'urgent'],
+    ['a', left.filter(late).length, 'past wait target'], ['m', ready.length, `AI-ready · avg ${Math.round(ready.reduce((a, p) => a + p.score, 0) / (ready.length || 1))}%`],
+  ].map(([c, v, l]) => `<div class="${c}"><strong>${v}</strong><small>${l}</small></div>`).join('');
+}
+
+function ring(s) {
+  const r = 20, c = 2 * Math.PI * r, col = s >= 85 ? 'var(--mint)' : 'var(--accent)';
+  return `<svg class="ring" viewBox="0 0 50 50"><circle class="bg" cx="25" cy="25" r="${r}"/><circle class="fg" cx="25" cy="25" r="${r}" stroke="${col}" stroke-dasharray="${c}" stroke-dashoffset="${c * (1 - s / 100)}"/><text x="25" y="30" text-anchor="middle">${s}</text></svg>`;
+}
+function passHTML(p) {
+  const prog = Math.min(100, (p.wait / TARGET[p.pr]) * 100);
+  return `<article class="pass ${p.pr}${done.has(p.id) ? ' done' : ''}" data-id="${p.id}">
+    <div class="pm">
+      <div class="p-top"><div><div class="p-id">${p.id}</div><div class="p-name">${p.name}</div></div><span class="prio">${p.pr}</span></div>
+      <div class="route"><div><span class="lbl">FROM</span><b>Waiting</b></div><div class="track"><i style="width:${prog}%"></i></div><div class="to"><span class="lbl">TO</span><b>${p.ward ?? '—'}</b></div></div>
+      <div class="meta"><div><small>CARE</small><b>${p.type}</b></div><div><small>NEEDS</small><b>${p.needs}</b></div><div><small>WAITING</small><b class="${late(p) ? 'late' : ''}">${fmt(p.wait)}</b></div></div>
+    </div>
+    <div class="stub">${p.bed ? `<span class="lbl">BED</span><span class="bedc">${p.bed}</span>${ring(p.score)}<button class="go" data-go="${p.id}">${done.has(p.id) ? '✓ Done' : 'Allocate'}</button>`
+      : `<span class="lbl">BED</span><span class="nobed">NO BED<br>FITS</span><span>⚠</span><button class="go ghost" data-go="${p.id}">Unlock</button>`}</div>
+  </article>`;
+}
+function rowHTML(p) {
+  const prog = Math.min(100, (p.wait / TARGET[p.pr]) * 100);
+  return `<div class="row ${p.pr}${p.id === sel ? ' sel' : ''}${done.has(p.id) ? ' done' : ''}" data-id="${p.id}">
+    <span class="edge"></span>
+    <span class="who"><b>${p.id}</b><small>${p.name}</small></span>
+    <span class="care">${p.type}</span>
+    <span class="needs">${p.needs}</span>
+    <span class="wbar${late(p) ? ' late' : ''}"><small><b>${fmt(p.wait)}</b> / ${fmt(TARGET[p.pr])}</small><span><i style="width:${prog}%"></i></span></span>
+    <span class="bed${p.bed ? '' : ' none'}">${p.bed ? `<b>${p.bed}</b><small>${p.ward}</small>` : '<b>No bed fits</b>'}</span>
+    <span>${p.bed ? `<span class="score${p.score >= 85 ? '' : ' mid'}">${p.score}%</span>` : ''}</span>
+    ${p.bed ? `<button class="go" data-go="${p.id}">${done.has(p.id) ? '✓ Done' : 'Allocate'}</button>` : `<button class="go ghost" data-go="${p.id}">Unlock</button>`}
+  </div>`;
+}
+
+function list() {
+  const vis = visible();
+  const el = document.getElementById('list');
+  const html = LANES.map(([k, label, note]) => {
+    const ps = vis.filter((p) => p.pr === k).sort(waitingOrder);
+    if (!ps.length) return '';
+    const ready = ps.filter((p) => p.bed && !done.has(p.id)).length, lt = ps.filter((p) => late(p) && !done.has(p.id)).length;
+    const lim = view === 'rows' ? ROW_LIMIT : PASS_LIMIT, shown = expanded.has(k) ? ps : ps.slice(0, lim);
+    const body = view === 'rows' ? shown.map(rowHTML).join('') : `<div class="pgrid">${shown.map(passHTML).join('')}</div>`;
+    return `<div class="lane${closed.has(k) ? ' closed' : ''}" data-lane="${k}">
+      <div class="lane-h" data-toggle="${k}"><span class="chev">▾</span><h2 style="color:rgb(${RGB[k]})">${label}</h2>
+        <span class="n" style="background:rgba(${RGB[k]},.16);color:rgb(${RGB[k]})">${ps.length}</span>
+        <small>${note}${lt ? ` · <b style="color:var(--coral)">${lt} past target</b>` : ''}</small><span class="sp"></span>
+        ${ready ? `<button class="bulk" data-bulk="${k}">✓ Allocate all ready (${ready})</button>` : ''}</div>
+      <div class="rows">${body}${ps.length > shown.length ? `<button class="more" data-more="${k}">Show all ${ps.length} ${label.toLowerCase()} patients</button>` : ''}</div>
+    </div>`;
+  }).join('');
+  el.innerHTML = html || '<div class="empty">No patients match this filter.</div>';
+  el.querySelectorAll('[data-toggle]').forEach((h) => h.onclick = (e) => { if (e.target.closest('[data-bulk]')) return; const k = h.dataset.toggle; closed.has(k) ? closed.delete(k) : closed.add(k); list(); });
+  el.querySelectorAll('[data-bulk]').forEach((b) => b.onclick = (e) => { e.stopPropagation(); bulk(b.dataset.bulk); });
+  el.querySelectorAll('[data-more]').forEach((b) => b.onclick = () => { expanded.add(b.dataset.more); list(); });
+  el.querySelectorAll('[data-id]').forEach((r) => r.onclick = (e) => {
+    const go = e.target.closest('[data-go]');
+    if (go) { e.stopPropagation(); act(go.dataset.go); return; }
+    sel = r.dataset.id; list(); side();
+  });
+}
+
+function act(id) {
+  const p = P.find((x) => x.id === id);
+  if (!p.bed) { toast(`AI unlock: ${p.unlock}`); return; }
+  done.add(id); toast(`${p.id} allocated to ${p.bed} (demo)`); render();
+}
+function bulk(k) {
+  const ps = visible().filter((p) => p.pr === k && p.bed && !done.has(p.id));
+  ps.forEach((p) => done.add(p.id)); toast(`${ps.length} ${k.toLowerCase()} patients allocated to their AI beds (demo — each one is confirmed in the real app)`); render();
+}
+
+function side() {
+  const p = P.find((x) => x.id === sel) ?? visible().filter((x) => !done.has(x.id)).sort((a, b) => (a.pr === 'URGENT' ? -1 : 0) - (b.pr === 'URGENT' ? -1 : 0) || waitingOrder(a, b))[0];
+  if (!p) { document.getElementById('side').innerHTML = '<div class="empty">Everyone is placed.</div>'; return; }
+  sel = p.id;
+  document.getElementById('side').innerHTML = `
+    <h3>Bed pass</h3>
+    ${passHTML(p)}
+    ${p.bed ? `<div class="box"><span class="muted">Why ${p.bed}? AI match ${p.score}/100</span>
+      ${FACTORS.map(([l, m], i) => `<div class="bar"><span>${l}</span><span class="t"><i style="width:${(p.f[i] / m) * 100}%"></i></span><em>${p.f[i]}/${m}</em></div>`).join('')}</div>`
+    : `<div class="box red"><b>No bed fits right now</b>${p.blocker}<div style="margin-top:8px;color:var(--pearl)">✦ AI unlock: ${p.unlock}</div></div>`}
+    <p class="muted">Rule-based resource match, not a clinical assessment. Staff confirm every allocation.</p>`;
+  document.querySelectorAll('#side [data-go]').forEach((b) => b.onclick = (e) => { e.stopPropagation(); act(b.dataset.go); });
+}
+function toast(m) { const t = document.getElementById('toast'); t.textContent = m; t.classList.add('on'); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove('on'), 2800); }
+function render() { heat(); kp(); list(); side(); }
+
+document.querySelectorAll('.seg button').forEach((b) => b.onclick = () => {
+  view = b.dataset.v; document.querySelectorAll('.seg button').forEach((x) => x.classList.toggle('on', x === b)); list();
+});
+document.getElementById('q').oninput = (e) => { q = e.target.value.trim().toLowerCase(); LANES.forEach(([k]) => q ? closed.delete(k) : null); list(); };
+document.getElementById('clear').onclick = () => { cellF = null; render(); };
+render();
+</script>
+</body>
+</html>
