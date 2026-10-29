@@ -258,6 +258,8 @@ def _groq_chat(db, history: list[dict]) -> dict:  # noqa: ANN001
                     cards.append(out["card"])
                 msgs.append({"role": "tool", "tool_call_id": c.id, "content": json.dumps(out, default=str)[:20000]})
     text = (message.content or "").strip() if message else ""
+    # gpt-oss likes typographic hyphens/spaces; keep bed and patient codes plain so they copy and search cleanly
+    text = text.translate({0x2010: "-", 0x2011: "-", 0x2012: "-", 0x2013: "-", 0x00A0: " ", 0x202F: " "})
     return {"reply": text or "Done.", "cards": cards, "engine": "groq", "model": config.GROQ_MODEL, "tools_used": used, "suggestions": []}
 
 
