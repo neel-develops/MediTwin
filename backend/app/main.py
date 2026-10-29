@@ -16,21 +16,26 @@ from .database import Database
 from .errors import ApiError
 
 
+def prepare_database(database: Database, seed: bool | None = None) -> None:
+    """Create tables and load the demo data into an empty database (safe to call more than once)."""
+    database.create_all()
+    if config.SEED_ON_START if seed is None else seed:
+        from .models import Ward
+        from .seed import seed_demo
+
+        with database.read() as s:
+            empty = s.query(Ward).first() is None
+        if empty:
+            with database.write() as s:
+                seed_demo(s)
+
+
 def create_app(db_path: Path | str | None = None, seed: bool | None = None, frontend: Path | None = None) -> FastAPI:
     database = Database(db_path or config.DATABASE_PATH)
 
     @asynccontextmanager
     async def lifespan(app: FastAPI):
-        database.create_all()
-        if config.SEED_ON_START if seed is None else seed:
-            from .models import Ward
-            from .seed import seed_demo
-
-            with database.read() as s:
-                empty = s.query(Ward).first() is None
-            if empty:
-                with database.write() as s:
-                    seed_demo(s)
+        prepare_database(database, seed)
         yield
         database.dispose()
 

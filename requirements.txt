@@ -1,0 +1,5 @@
+# Runtime packages for the Vercel Python function (api/index.py). Local dev uses backend/requirements.txt.
+fastapi==0.162.0
+SQLAlchemy==2.1.6
+pydantic==2.14.1
+groq==1.7.0
